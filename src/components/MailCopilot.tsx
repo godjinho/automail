@@ -3,6 +3,96 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
 
+// --- Email Tag Input Component ---
+function EmailTagInput({
+  emails,
+  onChange,
+  placeholder,
+  id,
+  autoFocus,
+}: {
+  emails: string[];
+  onChange: (emails: string[]) => void;
+  placeholder?: string;
+  id?: string;
+  autoFocus?: boolean;
+}) {
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function addEmails(raw: string) {
+    const parts = raw.split(/[;,\s]+/).map((s) => s.trim()).filter(Boolean);
+    const newEmails = parts.filter(
+      (e) => e.includes("@") && !emails.includes(e)
+    );
+    if (newEmails.length > 0) {
+      onChange([...emails, ...newEmails]);
+    }
+    setInputValue("");
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === ";" || e.key === ",") {
+      e.preventDefault();
+      if (inputValue.trim()) addEmails(inputValue);
+    }
+    if (e.key === "Backspace" && !inputValue && emails.length > 0) {
+      onChange(emails.slice(0, -1));
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (val.includes(";") || val.includes(",")) {
+      addEmails(val);
+    } else {
+      setInputValue(val);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text");
+    addEmails(text);
+  }
+
+  function handleBlur() {
+    if (inputValue.trim()) addEmails(inputValue);
+  }
+
+  function removeEmail(idx: number) {
+    onChange(emails.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div
+      onClick={() => inputRef.current?.focus()}
+      className="flex-1 flex flex-wrap items-center gap-1.5 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 min-h-[38px] focus-within:border-blue-500 transition cursor-text"
+    >
+      {emails.map((email, i) => (
+        <span key={i} className="inline-flex items-center gap-1 bg-blue-600/20 text-blue-300 text-xs px-2 py-1 rounded-md border border-blue-500/30 max-w-[220px]">
+          <span className="truncate">{email}</span>
+          <button type="button" onClick={(e) => { e.stopPropagation(); removeEmail(i); }}
+            className="text-blue-400 hover:text-white transition cursor-pointer text-xs leading-none ml-0.5">&times;</button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        id={id}
+        type="text"
+        value={inputValue}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
+        onBlur={handleBlur}
+        autoFocus={autoFocus}
+        placeholder={emails.length === 0 ? placeholder : ""}
+        className="flex-1 min-w-[120px] bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-600"
+      />
+    </div>
+  );
+}
+
 interface Thread {
   id: string;
   snippet: string;
@@ -123,9 +213,9 @@ export default function MailCopilot() {
 
   // Editor (reply/compose)
   const [editorMode, setEditorMode] = useState<EditorMode>(null);
-  const [editorTo, setEditorTo] = useState("");
-  const [editorCc, setEditorCc] = useState("");
-  const [editorBcc, setEditorBcc] = useState("");
+  const [editorTo, setEditorTo] = useState<string[]>([]);
+  const [editorCc, setEditorCc] = useState<string[]>([]);
+  const [editorBcc, setEditorBcc] = useState<string[]>([]);
   const [editorSubject, setEditorSubject] = useState("");
   const [editorBody, setEditorBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -275,7 +365,7 @@ export default function MailCopilot() {
     const myEmail = session?.user?.email || "";
     const to = extractEmail(lastMsg.from);
 
-    setEditorTo(to === myEmail && lastMsg.to ? extractEmail(lastMsg.to) : to);
+    setEditorTo(to === myEmail && lastMsg.to ? [extractEmail(lastMsg.to)] : [to]);
 
     if (all) {
       const allTo = lastMsg.to?.split(",").map((e) => extractEmail(e.trim())) || [];
@@ -283,11 +373,11 @@ export default function MailCopilot() {
       const ccList = [...allTo, ...allCc]
         .filter((e) => e && e !== myEmail && e !== to)
         .filter((e, i, arr) => arr.indexOf(e) === i);
-      setEditorCc(ccList.join(", "));
+      setEditorCc(ccList);
     } else {
-      setEditorCc("");
+      setEditorCc([]);
     }
-    setEditorBcc("");
+    setEditorBcc([]);
     setEditorSubject(threadDetail.subject.startsWith("Re:") ? threadDetail.subject : `Re: ${threadDetail.subject}`);
     setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
     setEditorMode("reply");
@@ -297,9 +387,9 @@ export default function MailCopilot() {
 
   // --- Open Compose ---
   function openCompose() {
-    setEditorTo("");
-    setEditorCc("");
-    setEditorBcc("");
+    setEditorTo([]);
+    setEditorCc([]);
+    setEditorBcc([]);
     setEditorSubject("");
     setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
     setEditorMode("compose");
@@ -347,16 +437,16 @@ export default function MailCopilot() {
 
   // --- Send ---
   async function handleSend() {
-    if (!editorTo.trim() || !editorBody.trim()) return;
+    if (editorTo.length === 0 || !editorBody.trim()) return;
     setSending(true);
     try {
       const payload: any = {
-        to: editorTo,
+        to: editorTo.join(", "),
         subject: editorSubject,
         body: editorBody,
       };
-      if (editorCc.trim()) payload.cc = editorCc;
-      if (editorBcc.trim()) payload.bcc = editorBcc;
+      if (editorCc.length > 0) payload.cc = editorCc.join(", ");
+      if (editorBcc.length > 0) payload.bcc = editorBcc.join(", ");
       if (editorMode === "reply" && threadDetail) {
         const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
         payload.threadId = threadDetail.id;
@@ -449,9 +539,9 @@ export default function MailCopilot() {
               {editorMode === "reply" ? "답장을 보내시겠습니까?" : "메일을 보내시겠습니까?"}
             </h3>
             <div className="space-y-1 text-sm text-gray-400 mb-3">
-              <p>받는 사람: <span className="text-gray-200">{editorTo}</span></p>
-              {editorCc && <p>참조(CC): <span className="text-gray-200">{editorCc}</span></p>}
-              {editorBcc && <p>비밀참조(BCC): <span className="text-gray-200">{editorBcc}</span></p>}
+              <p>받는 사람: <span className="text-gray-200">{editorTo.join(", ")}</span></p>
+              {editorCc.length > 0 && <p>참조(CC): <span className="text-gray-200">{editorCc.join(", ")}</span></p>}
+              {editorBcc.length > 0 && <p>비밀참조(BCC): <span className="text-gray-200">{editorBcc.join(", ")}</span></p>}
               {editorSubject && <p>제목: <span className="text-gray-200">{editorSubject}</span></p>}
             </div>
             <div className="bg-gray-950 rounded-lg p-3 max-h-40 overflow-y-auto">
@@ -655,30 +745,21 @@ export default function MailCopilot() {
                 )}
 
                 {/* To */}
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">받는사람</label>
-                  <input id="editor-to" type="text" value={editorTo}
-                    onChange={(e) => setEditorTo(e.target.value)}
-                    placeholder="이메일 주소"
-                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
+                <div className="flex items-start gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right mt-2">받는사람</label>
+                  <EmailTagInput id="editor-to" emails={editorTo} onChange={setEditorTo} placeholder="이메일 주소 입력 후 Enter" autoFocus={editorMode === "compose"} />
                 </div>
 
                 {/* CC */}
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">참조</label>
-                  <input type="text" value={editorCc}
-                    onChange={(e) => setEditorCc(e.target.value)}
-                    placeholder="CC"
-                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
+                <div className="flex items-start gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right mt-2">참조</label>
+                  <EmailTagInput emails={editorCc} onChange={setEditorCc} placeholder="CC" />
                 </div>
 
                 {/* BCC */}
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">비밀참조</label>
-                  <input type="text" value={editorBcc}
-                    onChange={(e) => setEditorBcc(e.target.value)}
-                    placeholder="BCC"
-                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
+                <div className="flex items-start gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right mt-2">비밀참조</label>
+                  <EmailTagInput emails={editorBcc} onChange={setEditorBcc} placeholder="BCC" />
                 </div>
 
                 {/* Subject */}
@@ -709,7 +790,7 @@ export default function MailCopilot() {
                 {/* Action buttons */}
                 <div className="flex items-center gap-3 pt-2">
                   <button onClick={() => setShowConfirm(true)}
-                    disabled={sending || !editorTo.trim() || !editorBody.trim()}
+                    disabled={sending || editorTo.length === 0 || !editorBody.trim()}
                     className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-8 py-2.5 rounded-lg font-medium transition cursor-pointer">
                     {editorMode === "reply" ? "답장 보내기" : "메일 보내기"}
                   </button>
