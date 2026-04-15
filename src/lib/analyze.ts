@@ -228,15 +228,18 @@ const COMPOSE_SYSTEM_PROMPT = `당신은 비즈니스 이메일 작성 비서입
 기본 톤: 공손하고 격식 있는 비즈니스 한국어
 
 규칙:
-- 본문은 반드시 "안녕하세요, 유진호 입니다.\n\n" 로 시작
-- 본문 작성
-- 본문 끝에 "\n\n유진호 올림" 으로 마무리
+- 본문은 반드시 "안녕하세요, 유진호 입니다." 로 시작
+- 본문을 작성
+- 본문 끝에 "유진호 올림" 으로 마무리
 - 서명 아래에는 아무것도 넣지 마세요 (footer는 시스템이 자동 추가)
 - 사용자의 구체적인 지시가 있으면 그에 맞게 작성하세요
 - 구체적 지시가 없으면 일반적인 비즈니스 이메일 틀을 작성하세요
 
-새 메일 작성 시 반드시 아래 JSON 형식으로 출력하세요:
-{"subject": "이메일 제목", "body": "이메일 본문 전체"}`;
+출력 형식 (반드시 아래 형식 그대로):
+===SUBJECT===
+여기에 이메일 제목
+===BODY===
+여기에 이메일 본문 전체`;
 
 export async function draftEmail(req: DraftRequest): Promise<DraftResult> {
   const isCompose = req.type === "compose";
@@ -270,14 +273,29 @@ export async function draftEmail(req: DraftRequest): Promise<DraftResult> {
     raw = res.choices[0]?.message?.content?.trim() || "";
   }
 
-  if (isCompose) {
+  if (isCompose && raw) {
+    const subjectMatch = raw.match(/===SUBJECT===\s*([\s\S]*?)===BODY===/);
+    const bodyMatch = raw.match(/===BODY===\s*([\s\S]*)/);
+
+    if (subjectMatch && bodyMatch) {
+      return {
+        subject: subjectMatch[1].trim(),
+        body: bodyMatch[1].trim(),
+      };
+    }
+
     try {
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return { subject: parsed.subject || "", body: parsed.body || "" };
+        const cleaned = jsonMatch[0].replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
+        const parsed = JSON.parse(cleaned);
+        if (parsed.subject || parsed.body) {
+          return { subject: parsed.subject || "", body: parsed.body || "" };
+        }
       }
     } catch { /* fall through */ }
+
+    return { subject: "", body: raw };
   }
 
   return { body: raw };

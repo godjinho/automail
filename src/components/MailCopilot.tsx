@@ -467,7 +467,12 @@ export default function MailCopilot() {
       });
       if (!res.ok) throw new Error("AI 작성 실패");
       const data = await res.json();
-      setEditorBody(data.body || data.draft || "");
+      const draftBody = data.body || data.draft || "";
+      if (!draftBody) {
+        showToast("AI 응답이 비어있습니다. 다시 시도해주세요.", "error");
+        return;
+      }
+      setEditorBody(draftBody);
       if (data.subject && editorMode === "compose") {
         setEditorSubject(data.subject);
       }
