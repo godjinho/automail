@@ -27,6 +27,12 @@ interface Message {
   references: string;
 }
 
+interface ThreadDetail {
+  id: string;
+  subject: string;
+  messages: Message[];
+}
+
 interface Analysis {
   summary: string;
   requirements: string[];
@@ -35,15 +41,8 @@ interface Analysis {
   urgency: "high" | "medium" | "low";
 }
 
-type Tone = "formal" | "friendly" | "concise" | "detailed";
 type Label = "INBOX" | "SENT" | "STARRED" | "IMPORTANT";
-
-const TONE_LABELS: Record<Tone, string> = {
-  formal: "격식체",
-  friendly: "친근하게",
-  concise: "간결하게",
-  detailed: "상세하게",
-};
+type EditorMode = "reply" | "compose" | null;
 
 const LABEL_ITEMS: { key: Label; label: string; icon: string }[] = [
   { key: "INBOX", label: "받은편지함", icon: "&#9993;" },
@@ -57,6 +56,9 @@ const URGENCY_STYLES: Record<string, { bg: string; text: string; label: string }
   medium: { bg: "bg-yellow-500/15", text: "text-yellow-400", label: "보통" },
   low: { bg: "bg-gray-500/15", text: "text-gray-400", label: "낮음" },
 };
+
+const DEFAULT_GREETING = "안녕하세요, 유진호 입니다.\n\n";
+const DEFAULT_CLOSING = "\n\n유진호 올림";
 
 function formatDate(dateStr: string): string {
   try {
@@ -79,6 +81,15 @@ function formatDate(dateStr: string): string {
   }
 }
 
+function formatFullDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 function extractName(from: string): string {
   const match = from.match(/^"?([^"<]+)"?\s*</);
   if (match) return match[1].trim();
@@ -92,30 +103,47 @@ function extractEmail(from: string): string {
 
 export default function MailCopilot() {
   const { data: session, status } = useSession();
+
+  // Thread list
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<{
-    thread: { id: string; subject: string; messages: Message[] };
-    analysis: Analysis;
-  } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [draftReply, setDraftReply] = useState("");
-  const [sending, setSending] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tone, setTone] = useState<Tone>("formal");
   const [label, setLabel] = useState<Label>("INBOX");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>();
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Thread detail (no auto-analysis)
+  const [threadDetail, setThreadDetail] = useState<ThreadDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // AI analysis (on-demand)
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  // Editor (reply/compose)
+  const [editorMode, setEditorMode] = useState<EditorMode>(null);
+  const [editorTo, setEditorTo] = useState("");
+  const [editorCc, setEditorCc] = useState("");
+  const [editorBcc, setEditorBcc] = useState("");
+  const [editorSubject, setEditorSubject] = useState("");
+  const [editorBody, setEditorBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [replyAll, setReplyAll] = useState(false);
+
+  // AI draft
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [aiDrafting, setAiDrafting] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+
+  // UI
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const threadListRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -130,17 +158,15 @@ export default function MailCopilot() {
     if (session?.error === "RefreshTokenError") signIn("google");
   }, [session?.error]);
 
-  // --- 키보드 단축키 ---
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
       if (e.key === "j" || e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) => {
           const next = Math.min(prev + 1, threads.length - 1);
-          if (threads[next]) selectThread(threads[next].id);
+          if (threads[next]) openThread(threads[next].id);
           return next;
         });
       }
@@ -148,42 +174,36 @@ export default function MailCopilot() {
         e.preventDefault();
         setSelectedIndex((prev) => {
           const next = Math.max(prev - 1, 0);
-          if (threads[next]) selectThread(threads[next].id);
+          if (threads[next]) openThread(threads[next].id);
           return next;
         });
       }
       if (e.key === "Escape") {
-        setSelectedThread(null);
+        if (showConfirm) { setShowConfirm(false); return; }
+        if (editorMode) { setEditorMode(null); return; }
+        setThreadDetail(null);
+        setAnalysis(null);
         setSelectedIndex(-1);
-        setShowConfirm(false);
       }
       if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         searchRef.current?.focus();
       }
-      if (e.key === "r" && !e.ctrlKey && !e.metaKey && selectedThread) {
-        e.preventDefault();
-        handleReanalyze();
-      }
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [threads, selectedThread, tone]);
+  }, [threads, threadDetail, editorMode, showConfirm]);
 
+  // --- Fetch threads ---
   async function fetchThreads(query?: string, append = false) {
-    if (append) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-      setNextPageToken(undefined);
-    }
+    if (append) setLoadingMore(true);
+    else { setLoading(true); setNextPageToken(undefined); }
     setError(null);
     try {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
       if (append && nextPageToken) params.set("pageToken", nextPageToken);
       if (!query) params.set("label", label);
-
       const res = await fetch(`/api/threads?${params}`);
       if (!res.ok) {
         const data = await res.json();
@@ -191,11 +211,8 @@ export default function MailCopilot() {
         throw new Error(data.error || `HTTP ${res.status}`);
       }
       const data = await res.json();
-      if (append) {
-        setThreads((prev) => [...prev, ...(data.threads || [])]);
-      } else {
-        setThreads(data.threads || []);
-      }
+      if (append) setThreads((prev) => [...prev, ...(data.threads || [])]);
+      else setThreads(data.threads || []);
       setNextPageToken(data.nextPageToken);
     } catch (err: any) {
       setError(err.message);
@@ -206,94 +223,154 @@ export default function MailCopilot() {
     }
   }
 
-  async function selectThread(threadId: string, selectedTone?: Tone, force = false) {
-    setAnalyzing(true);
+  // --- Open thread (NO auto-analysis) ---
+  async function openThread(threadId: string) {
+    setDetailLoading(true);
+    setAnalysis(null);
+    setEditorMode(null);
     setError(null);
     const idx = threads.findIndex((t) => t.id === threadId);
     if (idx >= 0) setSelectedIndex(idx);
 
     try {
-      const t = selectedTone || tone;
-      const url = `/api/threads/${threadId}?tone=${t}${force ? "&force=true" : ""}`;
-      const res = await fetch(url);
+      const res = await fetch(`/api/threads/${threadId}`);
       if (!res.ok) {
         const data = await res.json();
         if (res.status === 401) { signIn("google"); return; }
         throw new Error(data.error || `HTTP ${res.status}`);
       }
       const data = await res.json();
-      if (data.thread && data.analysis) {
-        setSelectedThread(data);
-        setDraftReply(data.analysis.draftReply);
-        // 모바일에서는 사이드바 닫기
-        if (window.innerWidth < 768) setSidebarOpen(false);
-      }
+      setThreadDetail(data.thread);
+      if (window.innerWidth < 768) setSidebarOpen(false);
     } catch (err: any) {
       setError(err.message);
-      showToast("분석 실패: " + err.message, "error");
+      showToast("메일 조회 실패: " + err.message, "error");
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  // --- AI Analysis (on-demand) ---
+  async function requestAnalysis() {
+    if (!threadDetail) return;
+    setAnalyzing(true);
+    try {
+      const res = await fetch(`/api/threads/${threadDetail.id}?analyze=true&tone=formal`);
+      if (!res.ok) throw new Error("분석 실패");
+      const data = await res.json();
+      setAnalysis(data.analysis);
+      showToast("AI 분석 완료", "success");
+    } catch (err: any) {
+      showToast("AI 분석 실패: " + err.message, "error");
     } finally {
       setAnalyzing(false);
     }
   }
 
-  function handleReanalyze() {
-    if (!selectedThread) return;
-    selectThread(selectedThread.thread.id, tone, true);
-  }
-
-  function handleToneChange(newTone: Tone) {
-    setTone(newTone);
-    if (selectedThread) selectThread(selectedThread.thread.id, newTone);
-  }
-
-  function handleLabelChange(newLabel: Label) {
-    setLabel(newLabel);
-    setSearchQuery("");
-    setSelectedThread(null);
-    setSelectedIndex(-1);
-  }
-
-  function getReplyRecipients() {
-    if (!selectedThread) return { to: "", cc: "" };
-    const lastMsg = selectedThread.thread.messages[selectedThread.thread.messages.length - 1];
+  // --- Open Reply Editor ---
+  function openReply(all = false) {
+    if (!threadDetail) return;
+    setReplyAll(all);
+    const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
     const myEmail = session?.user?.email || "";
     const to = extractEmail(lastMsg.from);
 
-    if (!replyAll) return { to, cc: "" };
+    setEditorTo(to === myEmail && lastMsg.to ? extractEmail(lastMsg.to) : to);
 
-    const allTo = lastMsg.to?.split(",").map((e) => extractEmail(e.trim())) || [];
-    const allCc = lastMsg.cc?.split(",").map((e) => extractEmail(e.trim())) || [];
-    const ccList = [...allTo, ...allCc]
-      .filter((e) => e && e !== myEmail && e !== to)
-      .filter((e, i, arr) => arr.indexOf(e) === i);
-
-    return { to, cc: ccList.join(", ") };
+    if (all) {
+      const allTo = lastMsg.to?.split(",").map((e) => extractEmail(e.trim())) || [];
+      const allCc = lastMsg.cc?.split(",").map((e) => extractEmail(e.trim())) || [];
+      const ccList = [...allTo, ...allCc]
+        .filter((e) => e && e !== myEmail && e !== to)
+        .filter((e, i, arr) => arr.indexOf(e) === i);
+      setEditorCc(ccList.join(", "));
+    } else {
+      setEditorCc("");
+    }
+    setEditorBcc("");
+    setEditorSubject(threadDetail.subject.startsWith("Re:") ? threadDetail.subject : `Re: ${threadDetail.subject}`);
+    setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
+    setEditorMode("reply");
+    setShowAiPanel(false);
+    setTimeout(() => bodyRef.current?.focus(), 100);
   }
 
-  async function handleSend() {
-    if (!selectedThread || !draftReply.trim()) return;
-    setSending(true);
-    const lastMsg = selectedThread.thread.messages[selectedThread.thread.messages.length - 1];
-    const { to, cc } = getReplyRecipients();
+  // --- Open Compose ---
+  function openCompose() {
+    setEditorTo("");
+    setEditorCc("");
+    setEditorBcc("");
+    setEditorSubject("");
+    setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
+    setEditorMode("compose");
+    setShowAiPanel(false);
+    setTimeout(() => {
+      const toInput = document.getElementById("editor-to");
+      toInput?.focus();
+    }, 100);
+  }
 
+  // --- AI Draft ---
+  async function requestAiDraft() {
+    if (!aiInstruction.trim()) return;
+    setAiDrafting(true);
     try {
-      const res = await fetch("/api/send", {
+      let context = "";
+      if (editorMode === "reply" && threadDetail) {
+        context = threadDetail.messages
+          .map((m) => `보낸사람: ${m.from}\n날짜: ${m.date}\n\n${m.body}`)
+          .join("\n\n---\n\n");
+      }
+      const res = await fetch("/api/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          threadId: selectedThread.thread.id,
-          to,
-          cc: cc || undefined,
-          subject: selectedThread.thread.subject,
-          body: draftReply,
-          messageId: lastMsg.messageId,
-          references: lastMsg.references,
+          instruction: aiInstruction,
+          context: context || undefined,
+          type: editorMode === "reply" ? "reply" : "compose",
         }),
+      });
+      if (!res.ok) throw new Error("AI 작성 실패");
+      const data = await res.json();
+      setEditorBody(data.draft);
+      setAiInstruction("");
+      setShowAiPanel(false);
+      showToast("AI 초안 작성 완료", "success");
+    } catch (err: any) {
+      showToast("AI 작성 실패: " + err.message, "error");
+    } finally {
+      setAiDrafting(false);
+    }
+  }
+
+  // --- Send ---
+  async function handleSend() {
+    if (!editorTo.trim() || !editorBody.trim()) return;
+    setSending(true);
+    try {
+      const payload: any = {
+        to: editorTo,
+        subject: editorSubject,
+        body: editorBody,
+      };
+      if (editorCc.trim()) payload.cc = editorCc;
+      if (editorBcc.trim()) payload.bcc = editorBcc;
+      if (editorMode === "reply" && threadDetail) {
+        const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
+        payload.threadId = threadDetail.id;
+        payload.messageId = lastMsg.messageId;
+        payload.references = lastMsg.references;
+      }
+      const res = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
-        showToast("답장이 전송되었습니다", "success");
+        showToast(editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다", "success");
         setShowConfirm(false);
+        setEditorMode(null);
       } else {
         showToast("전송 실패: " + data.error, "error");
         setShowConfirm(false);
@@ -306,18 +383,21 @@ export default function MailCopilot() {
     }
   }
 
-  async function handleCopy() {
-    await navigator.clipboard.writeText(draftReply);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     fetchThreads(searchQuery || undefined);
   }
 
-  // --- 로딩 ---
+  function handleLabelChange(newLabel: Label) {
+    setLabel(newLabel);
+    setSearchQuery("");
+    setThreadDetail(null);
+    setAnalysis(null);
+    setEditorMode(null);
+    setSelectedIndex(-1);
+  }
+
+  // --- Loading screen ---
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-400">
@@ -326,19 +406,17 @@ export default function MailCopilot() {
     );
   }
 
-  // --- 로그인 ---
+  // --- Login screen ---
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-950 text-white gap-8">
         <div className="text-center">
           <h1 className="text-5xl font-bold mb-3 tracking-tight">Automail</h1>
-          <p className="text-gray-400 text-lg">이메일 스레드 답장 코파일럿</p>
-          <p className="text-gray-600 text-sm mt-2">AI가 메일을 읽고 요약 · 분석 · 답장 초안까지</p>
+          <p className="text-gray-400 text-lg">이메일 작업공간</p>
+          <p className="text-gray-600 text-sm mt-2">메일을 읽고, 쓰고, AI의 도움을 받으세요</p>
         </div>
-        <button
-          onClick={() => signIn("google")}
-          className="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition cursor-pointer flex items-center gap-3 shadow-lg"
-        >
+        <button onClick={() => signIn("google")}
+          className="bg-white text-gray-900 px-8 py-3.5 rounded-xl font-semibold hover:bg-gray-100 transition cursor-pointer flex items-center gap-3 shadow-lg">
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -347,34 +425,35 @@ export default function MailCopilot() {
           </svg>
           Google로 로그인
         </button>
-        <p className="text-gray-700 text-xs">키보드: j/k 이동 · Enter 선택 · / 검색 · r 재분석 · Esc 닫기</p>
       </div>
     );
   }
 
-  const urgencyStyle = selectedThread ? URGENCY_STYLES[selectedThread.analysis.urgency] || URGENCY_STYLES.medium : null;
-  const { to: replyTo, cc: replyCc } = getReplyRecipients();
-
+  // --- Main UI ---
   return (
     <div className="flex h-screen bg-gray-950 text-white">
-      {/* 토스트 */}
+      {/* Toast */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-lg shadow-xl text-sm font-medium animate-slide-in ${
           toast.type === "success" ? "bg-green-600" : "bg-red-600"
         }`}>{toast.message}</div>
       )}
 
-      {/* 전송 확인 모달 */}
+      {/* Send Confirm Modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
-            <h3 className="text-lg font-bold mb-3">답장을 보내시겠습니까?</h3>
+            <h3 className="text-lg font-bold mb-3">
+              {editorMode === "reply" ? "답장을 보내시겠습니까?" : "메일을 보내시겠습니까?"}
+            </h3>
             <div className="space-y-1 text-sm text-gray-400 mb-3">
-              <p>받는 사람: <span className="text-gray-200">{replyTo}</span></p>
-              {replyCc && <p>CC: <span className="text-gray-200">{replyCc}</span></p>}
+              <p>받는 사람: <span className="text-gray-200">{editorTo}</span></p>
+              {editorCc && <p>참조(CC): <span className="text-gray-200">{editorCc}</span></p>}
+              {editorBcc && <p>비밀참조(BCC): <span className="text-gray-200">{editorBcc}</span></p>}
+              {editorSubject && <p>제목: <span className="text-gray-200">{editorSubject}</span></p>}
             </div>
             <div className="bg-gray-950 rounded-lg p-3 max-h-40 overflow-y-auto">
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">{draftReply.slice(0, 500)}{draftReply.length > 500 ? "..." : ""}</p>
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{editorBody.slice(0, 500)}{editorBody.length > 500 ? "..." : ""}</p>
             </div>
             <div className="flex gap-3 mt-5">
               <button onClick={handleSend} disabled={sending}
@@ -390,13 +469,13 @@ export default function MailCopilot() {
         </div>
       )}
 
-      {/* 모바일 사이드바 토글 */}
+      {/* Mobile sidebar toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)}
         className="md:hidden fixed top-3 left-3 z-30 bg-gray-800 p-2 rounded-lg cursor-pointer">
         <span className="text-lg">{sidebarOpen ? "\u2715" : "\u2630"}</span>
       </button>
 
-      {/* 좌측 사이드바 */}
+      {/* Left Sidebar */}
       <div className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0 transition-transform duration-200 
         fixed md:relative z-20 h-full w-80 md:w-96 border-r border-gray-800 flex flex-col shrink-0 bg-gray-950`}>
@@ -408,9 +487,9 @@ export default function MailCopilot() {
               <p className="text-xs text-gray-500">{session.user?.email}</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => { setSearchQuery(""); fetchThreads(); }} disabled={loading}
-                className="text-xs bg-gray-800 hover:bg-gray-700 disabled:opacity-50 px-3 py-1.5 rounded transition cursor-pointer">
-                {loading ? "..." : "새로고침"}
+              <button onClick={openCompose}
+                className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded font-medium transition cursor-pointer">
+                새 메일
               </button>
               <button onClick={() => signIn("google", undefined, { prompt: "select_account" })}
                 className="text-xs text-blue-400 hover:text-blue-300 transition cursor-pointer">
@@ -423,7 +502,7 @@ export default function MailCopilot() {
             </div>
           </div>
 
-          {/* 라벨 필터 */}
+          {/* Label filter */}
           <div className="flex gap-1 mb-3">
             {LABEL_ITEMS.map((item) => (
               <button key={item.key} onClick={() => handleLabelChange(item.key)}
@@ -436,7 +515,7 @@ export default function MailCopilot() {
             ))}
           </div>
 
-          {/* 검색 */}
+          {/* Search */}
           <form onSubmit={handleSearch} className="flex gap-2">
             <input ref={searchRef} type="text" value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -449,7 +528,8 @@ export default function MailCopilot() {
           </form>
         </div>
 
-        <div className="flex-1 overflow-y-auto" ref={threadListRef}>
+        {/* Thread list */}
+        <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="p-6 space-y-4">
               {[...Array(6)].map((_, i) => (
@@ -480,7 +560,7 @@ export default function MailCopilot() {
             <>
               {threads.map((thread, i) => (
                 <button key={thread.id}
-                  onClick={() => selectThread(thread.id)}
+                  onClick={() => openThread(thread.id)}
                   className={`w-full text-left p-4 border-b border-gray-800/50 hover:bg-gray-900/80 transition cursor-pointer ${
                     selectedIndex === i ? "bg-gray-900 border-l-2 border-l-blue-500" : ""
                   } ${thread.isUnread ? "bg-gray-900/30" : ""}`}>
@@ -506,8 +586,6 @@ export default function MailCopilot() {
                   </div>
                 </button>
               ))}
-
-              {/* 더 보기 */}
               {nextPageToken && (
                 <div className="p-4 text-center">
                   <button onClick={() => fetchThreads(searchQuery || undefined, true)}
@@ -522,168 +600,256 @@ export default function MailCopilot() {
         </div>
       </div>
 
-      {/* 모바일 오버레이 */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-10 bg-black/40" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* 우측 분석 패널 */}
+      {/* Right Panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {analyzing ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-gray-400 text-lg mb-1">AI가 스레드를 분석 중...</p>
-              <p className="text-gray-600 text-sm">요약 · 요구사항 · 액션 · 답장 초안 · 긴급도</p>
-            </div>
-          </div>
-        ) : !selectedThread ? (
-          <div className="flex-1 flex items-center justify-center text-gray-600">
-            <div className="text-center space-y-3">
-              <div className="text-5xl opacity-30">&#9993;</div>
-              <p className="text-xl">메일을 선택하세요</p>
-              <p className="text-sm text-gray-700">j/k로 이동 · / 검색 · r 재분석</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto">
-            {/* 상단 바 */}
-            <div className="sticky top-0 bg-gray-950/95 backdrop-blur border-b border-gray-800 px-4 md:px-6 py-3 flex items-center justify-between z-10 gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h2 className="text-base md:text-lg font-bold truncate">{selectedThread.thread.subject}</h2>
-                  {urgencyStyle && (
-                    <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${urgencyStyle.bg} ${urgencyStyle.text}`}>
-                      {urgencyStyle.label}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500">{selectedThread.thread.messages.length}개 메시지</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <select value={tone} onChange={(e) => handleToneChange(e.target.value as Tone)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-2 md:px-3 py-1.5 text-xs cursor-pointer focus:outline-none focus:border-blue-500">
-                  {Object.entries(TONE_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
-                <button onClick={handleReanalyze} disabled={analyzing}
-                  className="bg-gray-800 hover:bg-gray-700 px-2 md:px-3 py-1.5 rounded-lg text-xs transition cursor-pointer disabled:opacity-50">
-                  재분석
+        {/* Editor mode (reply/compose) */}
+        {editorMode ? (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Editor header */}
+            <div className="sticky top-0 bg-gray-950/95 backdrop-blur border-b border-gray-800 px-4 md:px-6 py-3 flex items-center justify-between z-10">
+              <h2 className="text-base font-bold">
+                {editorMode === "reply" ? "답장 작성" : "새 메일 작성"}
+              </h2>
+              <div className="flex gap-2">
+                <button onClick={() => setShowAiPanel(!showAiPanel)}
+                  className={`text-xs px-3 py-1.5 rounded transition cursor-pointer ${
+                    showAiPanel ? "bg-purple-600 text-white" : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                  }`}>
+                  AI 작성
+                </button>
+                <button onClick={() => setEditorMode(null)}
+                  className="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition cursor-pointer">
+                  닫기
                 </button>
               </div>
             </div>
 
-            <div className="p-4 md:p-6 space-y-5">
-              {/* 핵심 요약 */}
-              <section className="bg-gray-900 rounded-xl p-4 md:p-5 border border-gray-800">
-                <h3 className="text-blue-400 font-semibold mb-3 text-sm flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />핵심 요약
-                </h3>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap text-[15px]">{selectedThread.analysis.summary}</p>
-              </section>
-
-              {/* 상대 요구사항 */}
-              <section className="bg-gray-900 rounded-xl p-4 md:p-5 border border-gray-800">
-                <h3 className="text-amber-400 font-semibold mb-3 text-sm flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />상대 요구사항
-                </h3>
-                {selectedThread.analysis.requirements.length > 0 ? (
-                  <ul className="space-y-2">
-                    {selectedThread.analysis.requirements.map((req, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-gray-300 text-[15px]">
-                        <span className="text-amber-500/70 mt-1 text-xs">&#9654;</span>{req}
-                      </li>
-                    ))}
-                  </ul>
-                ) : <p className="text-gray-600 text-sm">특별한 요구사항이 감지되지 않았습니다</p>}
-              </section>
-
-              {/* 다음 액션 */}
-              <section className="bg-gray-900 rounded-xl p-4 md:p-5 border border-gray-800">
-                <h3 className="text-green-400 font-semibold mb-3 text-sm flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />다음 액션
-                </h3>
-                {selectedThread.analysis.nextActions.length > 0 ? (
-                  <ul className="space-y-2">
-                    {selectedThread.analysis.nextActions.map((action, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-gray-300 text-[15px]">
-                        <span className="bg-green-500/20 text-green-400 text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded shrink-0 mt-0.5">{i + 1}</span>
-                        {action}
-                      </li>
-                    ))}
-                  </ul>
-                ) : <p className="text-gray-600 text-sm">추가 액션이 없습니다</p>}
-              </section>
-
-              {/* 답장 초안 */}
-              <section className="bg-gray-900 rounded-xl p-4 md:p-5 border border-gray-800">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-purple-400 font-semibold text-sm flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />답장 초안
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input type="checkbox" checked={replyAll}
-                        onChange={(e) => setReplyAll(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-gray-600 accent-blue-500" />
-                      <span className="text-xs text-gray-500">전체답장</span>
-                    </label>
-                    <button onClick={handleCopy}
-                      className="text-xs text-gray-500 hover:text-gray-300 transition cursor-pointer">
-                      {copied ? "복사됨!" : "복사"}
-                    </button>
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <div className="max-w-3xl mx-auto space-y-3">
+                {/* AI panel */}
+                {showAiPanel && (
+                  <div className="bg-purple-950/30 border border-purple-800/50 rounded-xl p-4">
+                    <p className="text-sm text-purple-300 mb-2">AI에게 작성을 요청하세요</p>
+                    <div className="flex gap-2">
+                      <input type="text" value={aiInstruction}
+                        onChange={(e) => setAiInstruction(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); requestAiDraft(); } }}
+                        placeholder="예: 미팅 일정 확인 요청, 정중하게 거절, 견적서 요청 등..."
+                        className="flex-1 bg-gray-900 border border-purple-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition placeholder:text-gray-600" />
+                      <button onClick={requestAiDraft} disabled={aiDrafting || !aiInstruction.trim()}
+                        className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer shrink-0">
+                        {aiDrafting ? "작성 중..." : "작성"}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-2">기본 톤: 공손/격식체 | 서명: 유진호 올림 | 푸터 자동 포함</p>
                   </div>
+                )}
+
+                {/* To */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">받는사람</label>
+                  <input id="editor-to" type="text" value={editorTo}
+                    onChange={(e) => setEditorTo(e.target.value)}
+                    placeholder="이메일 주소"
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
                 </div>
 
-                {/* 받는사람 표시 */}
-                <div className="text-xs text-gray-500 mb-2 space-y-0.5">
-                  <p>받는 사람: <span className="text-gray-400">{replyTo}</span></p>
-                  {replyCc && <p>CC: <span className="text-gray-400">{replyCc}</span></p>}
+                {/* CC */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">참조</label>
+                  <input type="text" value={editorCc}
+                    onChange={(e) => setEditorCc(e.target.value)}
+                    placeholder="CC"
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
                 </div>
 
-                <textarea value={draftReply} onChange={(e) => setDraftReply(e.target.value)} rows={8}
-                  className="w-full bg-gray-950 border border-gray-700 rounded-lg p-4 text-gray-200 text-[15px] resize-y min-h-[160px] focus:outline-none focus:border-purple-500/60 transition leading-relaxed" />
-                <div className="flex items-center gap-3 mt-3">
-                  <button onClick={() => setShowConfirm(true)} disabled={sending || !draftReply.trim()}
-                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg font-medium transition cursor-pointer text-sm">
-                    답장 보내기
+                {/* BCC */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">비밀참조</label>
+                  <input type="text" value={editorBcc}
+                    onChange={(e) => setEditorBcc(e.target.value)}
+                    placeholder="BCC"
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
+                </div>
+
+                {/* Subject */}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-500 w-16 shrink-0 text-right">제목</label>
+                  <input type="text" value={editorSubject}
+                    onChange={(e) => setEditorSubject(e.target.value)}
+                    placeholder="메일 제목"
+                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition" />
+                </div>
+
+                {/* Body */}
+                <div className="mt-2">
+                  <textarea ref={bodyRef} value={editorBody}
+                    onChange={(e) => setEditorBody(e.target.value)}
+                    rows={16}
+                    style={{ fontFamily: "'맑은 고딕', 'Malgun Gothic', sans-serif", fontSize: "18px", lineHeight: "150%" }}
+                    className="w-full bg-gray-900 border border-gray-700 rounded-xl p-5 text-gray-200 resize-y min-h-[300px] focus:outline-none focus:border-blue-500/60 transition" />
+                </div>
+
+                {/* Footer preview */}
+                <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-xs text-gray-500">
+                  <p className="mb-1 text-gray-600">자동 추가 푸터:</p>
+                  <p><strong className="text-gray-400">유진호</strong></p>
+                  <p><a href="https://freekitlab.com/" className="text-blue-400">freekitlab.com</a> &nbsp;|&nbsp; Tel. 010-7207-5808</p>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-3 pt-2">
+                  <button onClick={() => setShowConfirm(true)}
+                    disabled={sending || !editorTo.trim() || !editorBody.trim()}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-8 py-2.5 rounded-lg font-medium transition cursor-pointer">
+                    {editorMode === "reply" ? "답장 보내기" : "메일 보내기"}
                   </button>
-                  <button onClick={() => setDraftReply(selectedThread.analysis.draftReply)}
-                    className="text-xs text-gray-500 hover:text-gray-300 transition cursor-pointer">
-                    초안 되돌리기
+                  <button onClick={() => setEditorMode(null)}
+                    className="text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer">
+                    취소
                   </button>
                 </div>
-              </section>
+              </div>
+            </div>
+          </div>
+        ) : detailLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-gray-400">메일 불러오는 중...</p>
+            </div>
+          </div>
+        ) : !threadDetail ? (
+          <div className="flex-1 flex items-center justify-center text-gray-600">
+            <div className="text-center space-y-3">
+              <div className="text-5xl opacity-30">&#9993;</div>
+              <p className="text-xl">메일을 선택하세요</p>
+              <p className="text-sm text-gray-700">j/k로 이동 · / 검색 · Esc 닫기</p>
+            </div>
+          </div>
+        ) : (
+          /* Thread detail view */
+          <div className="flex-1 overflow-y-auto">
+            {/* Thread header + actions */}
+            <div className="sticky top-0 bg-gray-950/95 backdrop-blur border-b border-gray-800 px-4 md:px-6 py-3 z-10">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base md:text-lg font-bold truncate">{threadDetail.subject}</h2>
+                  <p className="text-xs text-gray-500">{threadDetail.messages.length}개 메시지</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <button onClick={() => openReply(false)}
+                    className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded font-medium transition cursor-pointer">
+                    답장
+                  </button>
+                  <button onClick={() => openReply(true)}
+                    className="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition cursor-pointer">
+                    전체답장
+                  </button>
+                  <button onClick={requestAnalysis} disabled={analyzing}
+                    className="text-xs bg-purple-700/80 hover:bg-purple-600 disabled:opacity-50 px-3 py-1.5 rounded transition cursor-pointer">
+                    {analyzing ? "분석 중..." : "AI 분석"}
+                  </button>
+                </div>
+              </div>
+            </div>
 
-              {/* 원본 스레드 */}
-              <details className="bg-gray-900 rounded-xl border border-gray-800">
-                <summary className="p-4 md:p-5 cursor-pointer text-gray-400 hover:text-gray-200 transition text-sm">
-                  원본 메일 스레드 ({selectedThread.thread.messages.length}개)
-                </summary>
-                <div className="px-4 md:px-5 pb-5 space-y-5">
-                  {selectedThread.thread.messages.map((msg) => {
-                    const isMe = session.user?.email && msg.from.includes(session.user.email);
-                    return (
-                      <div key={msg.id} className={`border-l-2 pl-4 ${isMe ? "border-blue-500/50" : "border-gray-700"}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <span className={`text-sm font-medium ${isMe ? "text-blue-300" : "text-gray-300"}`}>
-                              {extractName(msg.from)}
-                              {isMe && <span className="text-[10px] text-blue-500 ml-1.5">나</span>}
-                            </span>
-                            {msg.cc && <p className="text-[10px] text-gray-600 mt-0.5">CC: {msg.cc}</p>}
-                          </div>
-                          <span className="text-xs text-gray-600">{formatDate(msg.date)}</span>
-                        </div>
-                        <pre className="text-sm text-gray-400 whitespace-pre-wrap font-sans leading-relaxed">
-                          {msg.body || "(본문 없음)"}
-                        </pre>
+            <div className="p-4 md:p-6 space-y-4">
+              {/* AI Analysis (if requested) */}
+              {analysis && (
+                <div className="bg-purple-950/20 border border-purple-800/40 rounded-xl p-4 md:p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-purple-300 font-semibold text-sm flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />AI 분석 결과
+                    </h3>
+                    {analysis.urgency && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${URGENCY_STYLES[analysis.urgency]?.bg} ${URGENCY_STYLES[analysis.urgency]?.text}`}>
+                        {URGENCY_STYLES[analysis.urgency]?.label}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-400 font-medium mb-1">핵심 요약</p>
+                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{analysis.summary}</p>
+                  </div>
+                  {analysis.requirements.length > 0 && (
+                    <div>
+                      <p className="text-xs text-amber-400 font-medium mb-1">상대 요구사항</p>
+                      <ul className="space-y-1">
+                        {analysis.requirements.map((r, i) => (
+                          <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                            <span className="text-amber-500/70 mt-0.5 text-xs">&#9654;</span>{r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.nextActions.length > 0 && (
+                    <div>
+                      <p className="text-xs text-green-400 font-medium mb-1">다음 액션</p>
+                      <ul className="space-y-1">
+                        {analysis.nextActions.map((a, i) => (
+                          <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                            <span className="bg-green-500/20 text-green-400 text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded shrink-0 mt-0.5">{i + 1}</span>
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {analysis.draftReply && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-purple-400 font-medium">AI 추천 답장</p>
+                        <button onClick={() => {
+                          openReply(false);
+                          setTimeout(() => setEditorBody(analysis.draftReply), 50);
+                        }}
+                          className="text-[11px] text-purple-400 hover:text-purple-300 transition cursor-pointer">
+                          답장에 적용
+                        </button>
                       </div>
-                    );
-                  })}
+                      <p className="text-sm text-gray-400 whitespace-pre-wrap bg-gray-900/50 rounded-lg p-3">{analysis.draftReply}</p>
+                    </div>
+                  )}
                 </div>
-              </details>
+              )}
+
+              {/* Messages */}
+              {threadDetail.messages.map((msg, i) => {
+                const isMe = session.user?.email && msg.from.includes(session.user.email);
+                const isLast = i === threadDetail.messages.length - 1;
+                return (
+                  <div key={msg.id} className={`bg-gray-900 rounded-xl border ${isLast ? "border-gray-700" : "border-gray-800"} overflow-hidden`}>
+                    <div className="px-4 md:px-5 py-3 border-b border-gray-800/50 flex justify-between items-start gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`text-sm font-medium ${isMe ? "text-blue-300" : "text-gray-200"}`}>
+                            {extractName(msg.from)}
+                          </span>
+                          {isMe && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">나</span>}
+                        </div>
+                        <p className="text-[11px] text-gray-600 truncate">
+                          {extractEmail(msg.from)}
+                          {msg.to && <> &rarr; {extractEmail(msg.to)}</>}
+                        </p>
+                        {msg.cc && <p className="text-[11px] text-gray-600">CC: {msg.cc}</p>}
+                      </div>
+                      <span className="text-xs text-gray-500 shrink-0">{formatFullDate(msg.date)}</span>
+                    </div>
+                    <div className="px-4 md:px-5 py-4">
+                      <pre className="text-sm text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">
+                        {msg.body || "(본문 없음)"}
+                      </pre>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

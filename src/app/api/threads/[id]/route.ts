@@ -14,6 +14,7 @@ export async function GET(
   }
 
   const { id } = await params;
+  const withAnalysis = request.nextUrl.searchParams.get("analyze") === "true";
   const tone = (request.nextUrl.searchParams.get("tone") || "formal") as ReplyTone;
   const force = request.nextUrl.searchParams.get("force") === "true";
 
@@ -21,22 +22,22 @@ export async function GET(
 
   try {
     const thread = await getThreadDetail(session.accessToken, id);
+
+    if (!withAnalysis) {
+      return NextResponse.json({ thread });
+    }
+
     const analysis = await analyzeThread(thread, session.user?.email || undefined, tone);
     return NextResponse.json({ thread, analysis });
   } catch (error: any) {
     const status = error?.code || error?.status || 500;
-
     if (status === 401) {
       return NextResponse.json({ error: "인증이 만료되었습니다." }, { status: 401 });
     }
     if (status === 429) {
       return NextResponse.json({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
     }
-
-    console.error("Analysis error:", error);
-    return NextResponse.json(
-      { error: error.message || "분석 실패" },
-      { status: 500 }
-    );
+    console.error("Thread detail error:", error);
+    return NextResponse.json({ error: error.message || "조회 실패" }, { status: 500 });
   }
 }

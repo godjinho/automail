@@ -195,3 +195,52 @@ function parseAnalysis(content: string): AnalysisResult {
     urgency: "medium",
   };
 }
+
+// --- AI 메일 초안 작성 ---
+
+const DRAFT_SYSTEM_PROMPT = `당신은 비즈니스 이메일 작성 비서입니다.
+작성자: 유진호
+기본 톤: 공손하고 격식 있는 비즈니스 한국어
+
+규칙:
+- 반드시 "안녕하세요, 유진호 입니다.\n\n" 로 시작
+- 본문 작성
+- 본문 끝에 "\n\n유진호 올림" 으로 마무리
+- 서명 아래에는 아무것도 넣지 마세요 (footer는 시스템이 자동 추가)
+- 사용자의 지시에 맞게 내용을 작성하세요
+- 응답은 이메일 본문 텍스트만 출력하세요. JSON이나 다른 형식 금지.`;
+
+export interface DraftRequest {
+  instruction: string;
+  context?: string;
+  type: "reply" | "compose";
+}
+
+export async function draftEmail(req: DraftRequest): Promise<string> {
+  const userPrompt = req.context
+    ? `[${req.type === "reply" ? "회신" : "새 메일"} 작성 요청]\n\n지시: ${req.instruction}\n\n참고 메일 내용:\n${req.context}`
+    : `[새 메일 작성 요청]\n\n지시: ${req.instruction}`;
+
+  const messages: { role: "system" | "user"; content: string }[] = [
+    { role: "system", content: DRAFT_SYSTEM_PROMPT },
+    { role: "user", content: userPrompt },
+  ];
+
+  try {
+    const res = await getDeepSeek().chat.completions.create({
+      model: "deepseek-chat",
+      messages,
+      max_tokens: 2000,
+      temperature: 0.4,
+    });
+    return res.choices[0]?.message?.content?.trim() || "";
+  } catch {
+    const res = await getOpenAI().chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages,
+      max_tokens: 2000,
+      temperature: 0.4,
+    });
+    return res.choices[0]?.message?.content?.trim() || "";
+  }
+}
