@@ -11,6 +11,7 @@ export interface GmailThread {
   messageCount: number;
   hasAttachment: boolean;
   isUnread: boolean;
+  isStarred: boolean;
 }
 
 export interface GmailMessage {
@@ -113,7 +114,7 @@ function buildThreadSummary(detail: any): GmailThread {
   const lastMsg = messages[messages.length - 1];
   const firstHeaders = firstMsg?.payload?.headers || [];
   const lastHeaders = lastMsg?.payload?.headers || [];
-  const lastLabels = lastMsg?.labelIds || [];
+  const allLabels = messages.flatMap((m: any) => m.labelIds || []);
 
   return {
     id: detail.data.id!,
@@ -125,7 +126,8 @@ function buildThreadSummary(detail: any): GmailThread {
     lastDate: getHeader(lastHeaders as any, "Date"),
     messageCount: messages.length,
     hasAttachment: false,
-    isUnread: lastLabels.includes("UNREAD"),
+    isUnread: allLabels.includes("UNREAD"),
+    isStarred: allLabels.includes("STARRED"),
   };
 }
 
@@ -203,4 +205,26 @@ export async function getThreadDetail(
   const subject = messages[0]?.subject || "(제목 없음)";
 
   return { id: threadId, subject, messages };
+}
+
+export async function toggleStar(
+  accessToken: string,
+  threadId: string,
+  star: boolean
+): Promise<void> {
+  const gmail = createGmailClient(accessToken);
+  const thread = await gmail.users.threads.get({ userId: "me", id: threadId, format: "minimal" });
+  const messageIds = (thread.data.messages || []).map((m) => m.id!);
+
+  await Promise.all(
+    messageIds.map((msgId) =>
+      gmail.users.messages.modify({
+        userId: "me",
+        id: msgId,
+        requestBody: star
+          ? { addLabelIds: ["STARRED"] }
+          : { removeLabelIds: ["STARRED"] },
+      })
+    )
+  );
 }

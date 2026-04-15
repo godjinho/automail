@@ -103,6 +103,7 @@ interface Thread {
   lastDate: string;
   messageCount: number;
   isUnread: boolean;
+  isStarred: boolean;
 }
 
 interface Message {
@@ -131,14 +132,13 @@ interface Analysis {
   urgency: "high" | "medium" | "low";
 }
 
-type Label = "INBOX" | "SENT" | "STARRED" | "IMPORTANT";
+type Label = "INBOX" | "SENT" | "STARRED";
 type EditorMode = "reply" | "compose" | null;
 
 const LABEL_ITEMS: { key: Label; label: string; icon: string }[] = [
   { key: "INBOX", label: "받은편지함", icon: "&#9993;" },
   { key: "SENT", label: "보낸편지함", icon: "&#10148;" },
   { key: "STARRED", label: "별표", icon: "&#9733;" },
-  { key: "IMPORTANT", label: "중요", icon: "&#9888;" },
 ];
 
 const URGENCY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -511,6 +511,30 @@ export default function MailCopilot() {
     fetchThreads(searchQuery || undefined);
   }
 
+  async function toggleStar(threadId: string, currentStarred: boolean) {
+    const newStarred = !currentStarred;
+    setThreads((prev) =>
+      prev.map((t) => (t.id === threadId ? { ...t, isStarred: newStarred } : t))
+    );
+    try {
+      const res = await fetch("/api/star", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ threadId, star: newStarred }),
+      });
+      if (!res.ok) {
+        setThreads((prev) =>
+          prev.map((t) => (t.id === threadId ? { ...t, isStarred: currentStarred } : t))
+        );
+        showToast("별표 변경 실패", "error");
+      }
+    } catch {
+      setThreads((prev) =>
+        prev.map((t) => (t.id === threadId ? { ...t, isStarred: currentStarred } : t))
+      );
+    }
+  }
+
   function handleLabelChange(newLabel: Label) {
     setLabel(newLabel);
     setSearchQuery("");
@@ -684,32 +708,43 @@ export default function MailCopilot() {
           ) : (
             <>
               {threads.map((thread, i) => (
-                <button key={thread.id}
-                  onClick={() => openThread(thread.id)}
-                  className={`w-full text-left p-4 border-b border-gray-800/50 hover:bg-gray-900/80 transition cursor-pointer ${
+                <div key={thread.id}
+                  className={`relative flex items-start border-b border-gray-800/50 hover:bg-gray-900/80 transition ${
                     selectedIndex === i ? "bg-gray-900 border-l-2 border-l-blue-500" : ""
                   } ${thread.isUnread ? "bg-gray-900/30" : ""}`}>
-                  <div className="flex justify-between items-start mb-1">
-                    <span className={`text-sm truncate max-w-[180px] ${thread.isUnread ? "font-bold text-white" : "font-medium text-gray-300"}`}>
-                      {extractName(thread.from)}
-                    </span>
-                    <div className="flex items-center gap-1.5 ml-2 shrink-0">
-                      {thread.messageCount > 1 && (
-                        <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">{thread.messageCount}</span>
-                      )}
-                      <span className="text-xs text-gray-600">{formatDate(thread.lastDate || thread.date)}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleStar(thread.id, thread.isStarred); }}
+                    className={`shrink-0 pt-4 pl-3 pr-1 text-base cursor-pointer transition hover:scale-110 ${
+                      thread.isStarred ? "text-yellow-400" : "text-gray-700 hover:text-gray-500"
+                    }`}
+                    title={thread.isStarred ? "별표 해제" : "별표 추가"}>
+                    {thread.isStarred ? "\u2605" : "\u2606"}
+                  </button>
+                  <button
+                    onClick={() => openThread(thread.id)}
+                    className="flex-1 text-left p-4 pl-2 cursor-pointer">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-sm truncate max-w-[180px] ${thread.isUnread ? "font-bold text-white" : "font-medium text-gray-300"}`}>
+                        {extractName(thread.from)}
+                      </span>
+                      <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                        {thread.messageCount > 1 && (
+                          <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">{thread.messageCount}</span>
+                        )}
+                        <span className="text-xs text-gray-600">{formatDate(thread.lastDate || thread.date)}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className={`text-sm truncate mb-1 ${thread.isUnread ? "text-white" : "text-gray-400"}`}>
-                    {thread.subject}
-                  </div>
-                  <div className="text-xs text-gray-600 truncate">
-                    {thread.messageCount > 1 && thread.lastFrom && (
-                      <span className="text-gray-500">{extractName(thread.lastFrom)}: </span>
-                    )}
-                    {thread.snippet}
-                  </div>
-                </button>
+                    <div className={`text-sm truncate mb-1 ${thread.isUnread ? "text-white" : "text-gray-400"}`}>
+                      {thread.subject}
+                    </div>
+                    <div className="text-xs text-gray-600 truncate">
+                      {thread.messageCount > 1 && thread.lastFrom && (
+                        <span className="text-gray-500">{extractName(thread.lastFrom)}: </span>
+                      )}
+                      {thread.snippet}
+                    </div>
+                  </button>
+                </div>
               ))}
               {nextPageToken && (
                 <div className="p-4 text-center">
