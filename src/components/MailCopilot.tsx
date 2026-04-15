@@ -290,6 +290,12 @@ function extractEmail(from: string): string {
 
 export default function MailCopilot() {
   const { data: session, status } = useSession();
+  const [isApp, setIsApp] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsApp(params.get("app") === "android" || !!(window as any).__AUTOMAIL_APP);
+  }, []);
 
   // Thread list
   const [threads, setThreads] = useState<Thread[]>([]);
@@ -337,7 +343,11 @@ export default function MailCopilot() {
   // UI
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isApp && window.innerWidth >= 768) setSidebarOpen(true);
+  }, [isApp]);
   const [showContacts, setShowContacts] = useState(false);
   const [contactList, setContactList] = useState<Contact[]>([]);
   const [vipSet, setVipSet] = useState<Set<string>>(new Set());
@@ -459,7 +469,7 @@ export default function MailCopilot() {
       }
       const data = await res.json();
       setThreadDetail(data.thread);
-      if (window.innerWidth < 768) setSidebarOpen(false);
+      if (isApp || window.innerWidth < 768) setSidebarOpen(false);
     } catch (err: any) {
       setError(err.message);
       showToast("메일 조회 실패: " + err.message, "error");
@@ -1500,6 +1510,26 @@ export default function MailCopilot() {
             </div>
           </div>
         )}
+
+        {/* App mode: Floating AI action buttons */}
+        {isApp && threadDetail && !editorMode && selectedIndex >= 0 && (
+          <div className="fixed bottom-6 right-4 z-30 flex flex-col gap-2 items-end">
+            <button onClick={() => { openReply(false, true); }}
+              className="bg-blue-600 hover:bg-blue-500 shadow-xl rounded-full px-4 py-3 text-sm font-medium transition flex items-center gap-2">
+              <span>&#9998;</span> AI 답장
+            </button>
+            <button onClick={() => { openReply(false, false); }}
+              className="bg-gray-800 hover:bg-gray-700 border border-gray-700 shadow-xl rounded-full px-4 py-3 text-sm font-medium transition flex items-center gap-2">
+              <span>&#8617;</span> 직접 답장
+            </button>
+            <button onClick={requestAnalysis}
+              disabled={analyzing}
+              className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 shadow-xl rounded-full px-4 py-3 text-sm font-medium transition flex items-center gap-2">
+              <span>&#9889;</span> {analyzing ? "분석 중..." : "AI 분석"}
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );

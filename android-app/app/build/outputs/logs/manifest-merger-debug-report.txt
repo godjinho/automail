@@ -1,0 +1,306 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:2:1-26:12
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\25fe8848d5fd6d7e1c6d6dbdc68aa463\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f25cba42699a41ecc57b791663742b2\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\6eb7f75072ef2800f72bace8fdc6e956\transformed\constraintlayout-2.0.1\AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\b29a051f732d2a2f84392ee7b43c8232\transformed\appcompat-1.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\de2d73e98b02fa43037065fc793898f5\transformed\webkit-1.12.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7cb28bc478bc40b3ebb043f04579c5f4\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\627302d5a4b0560c2bba5de69afd5a8b\transformed\viewpager2-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\godji\.gradle\caches\8.11.1\transforms\4c23f565ee7df427a26bb8ab05d2ea06\transformed\fragment-1.5.4\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\1fc7f17f3018d852a45cb05c306f666f\transformed\activity-1.8.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\7e5ab385023e82574f12007ff76c8c59\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\dec1439401c7995b6316b8a7d2bedead\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\45a3638748922e7b276ece919877a993\transformed\transition-1.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f138a3af7e35f0d3459be0f9eb7705cb\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\eda08c8ab6090068832d1e20caa839b5\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\6834ace68f8aa4ccd6a7f0606ee81fd7\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\78ffb4fe048cfe02fe5c049e050230e2\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f36f816bf1902ca930ee0e9bafe9153\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\077f1b02e54db24bd1d3b080e47144b8\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\d82b954d7f29a3356f4d75866c5d4a50\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\8822c28bb035aa2bb4e37ac20616a1a4\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\a935cde7702c061ff0a69c85feb7f914\transformed\core-ktx-1.13.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\e770e364fa8161f9b723fb3ef102b953\transformed\drawerlayout-1.1.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\e49fec877a4ad9e6b4ab86c7663d247d\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\fe8ad3c8e1169ec770e9bcc3337117f1\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f49ebcb56f1574ca0d7d82dd42d35bd4\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2d8fa74b1f4ca5c076182437449b2295\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7ebe4587b02fdf6b712b324d7d3adb55\transformed\recyclerview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9db74f6a192d6c861dbf1721badcca78\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\59628f70395a84a0d28721f3accb3fb4\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2f00b0316b3ea715f1122055364c04a2\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\ee4d22f44dcd12677b79fe35321e71a0\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\5df48f6696b944f805f7daa49922eab6\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\4483201551c564cefbfcfaf5462afc37\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\d87b18e27f4cb4f5677c1f8adef99725\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\387b31e23121137d9749df0d201ada4f\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\c72e6779054f809da409cf6a5c7e8b9b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\143e59704d8cb9aab13d5d79e6a54a10\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\98f1395b58616e73094b39b1afc6f0de\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+	package
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:4:5-67
+	android:name
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:4:22-64
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:5:5-79
+	android:name
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:5:22-76
+application
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:7:5-25:19
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:7:5-25:19
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\25fe8848d5fd6d7e1c6d6dbdc68aa463\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\25fe8848d5fd6d7e1c6d6dbdc68aa463\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\6eb7f75072ef2800f72bace8fdc6e956\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\6eb7f75072ef2800f72bace8fdc6e956\transformed\constraintlayout-2.0.1\AndroidManifest.xml:9:5-20
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\5df48f6696b944f805f7daa49922eab6\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\5df48f6696b944f805f7daa49922eab6\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:12:9-35
+	android:label
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:10:9-41
+	android:roundIcon
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:11:9-54
+	android:icon
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:9:9-43
+	android:allowBackup
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:8:9-35
+	android:theme
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:13:9-46
+	android:usesCleartextTraffic
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:14:9-44
+activity#com.freekitlab.automail.MainActivity
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:15:9-24:20
+	android:windowSoftInputMode
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:19:13-55
+	android:exported
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:17:13-36
+	android:configChanges
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:18:13-83
+	android:name
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:16:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:20:13-23:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:21:17-69
+	android:name
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:21:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:22:17-77
+	android:name
+		ADDED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml:22:27-74
+uses-sdk
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\25fe8848d5fd6d7e1c6d6dbdc68aa463\transformed\material-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.12.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\25fe8848d5fd6d7e1c6d6dbdc68aa463\transformed\material-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f25cba42699a41ecc57b791663742b2\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f25cba42699a41ecc57b791663742b2\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\6eb7f75072ef2800f72bace8fdc6e956\transformed\constraintlayout-2.0.1\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.0.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\6eb7f75072ef2800f72bace8fdc6e956\transformed\constraintlayout-2.0.1\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\b29a051f732d2a2f84392ee7b43c8232\transformed\appcompat-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\b29a051f732d2a2f84392ee7b43c8232\transformed\appcompat-1.7.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\de2d73e98b02fa43037065fc793898f5\transformed\webkit-1.12.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.webkit:webkit:1.12.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\de2d73e98b02fa43037065fc793898f5\transformed\webkit-1.12.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7cb28bc478bc40b3ebb043f04579c5f4\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.swiperefreshlayout:swiperefreshlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7cb28bc478bc40b3ebb043f04579c5f4\transformed\swiperefreshlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\627302d5a4b0560c2bba5de69afd5a8b\transformed\viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\627302d5a4b0560c2bba5de69afd5a8b\transformed\viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\godji\.gradle\caches\8.11.1\transforms\4c23f565ee7df427a26bb8ab05d2ea06\transformed\fragment-1.5.4\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\godji\.gradle\caches\8.11.1\transforms\4c23f565ee7df427a26bb8ab05d2ea06\transformed\fragment-1.5.4\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\1fc7f17f3018d852a45cb05c306f666f\transformed\activity-1.8.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\1fc7f17f3018d852a45cb05c306f666f\transformed\activity-1.8.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\7e5ab385023e82574f12007ff76c8c59\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\7e5ab385023e82574f12007ff76c8c59\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\dec1439401c7995b6316b8a7d2bedead\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\dec1439401c7995b6316b8a7d2bedead\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\45a3638748922e7b276ece919877a993\transformed\transition-1.5.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.transition:transition:1.5.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\45a3638748922e7b276ece919877a993\transformed\transition-1.5.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f138a3af7e35f0d3459be0f9eb7705cb\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f138a3af7e35f0d3459be0f9eb7705cb\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\eda08c8ab6090068832d1e20caa839b5\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\eda08c8ab6090068832d1e20caa839b5\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\6834ace68f8aa4ccd6a7f0606ee81fd7\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\6834ace68f8aa4ccd6a7f0606ee81fd7\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\78ffb4fe048cfe02fe5c049e050230e2\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\78ffb4fe048cfe02fe5c049e050230e2\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f36f816bf1902ca930ee0e9bafe9153\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\9f36f816bf1902ca930ee0e9bafe9153\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\077f1b02e54db24bd1d3b080e47144b8\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\077f1b02e54db24bd1d3b080e47144b8\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\d82b954d7f29a3356f4d75866c5d4a50\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\d82b954d7f29a3356f4d75866c5d4a50\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\8822c28bb035aa2bb4e37ac20616a1a4\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\8822c28bb035aa2bb4e37ac20616a1a4\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\a935cde7702c061ff0a69c85feb7f914\transformed\core-ktx-1.13.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\a935cde7702c061ff0a69c85feb7f914\transformed\core-ktx-1.13.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\e770e364fa8161f9b723fb3ef102b953\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\e770e364fa8161f9b723fb3ef102b953\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\e49fec877a4ad9e6b4ab86c7663d247d\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\e49fec877a4ad9e6b4ab86c7663d247d\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\fe8ad3c8e1169ec770e9bcc3337117f1\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\fe8ad3c8e1169ec770e9bcc3337117f1\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f49ebcb56f1574ca0d7d82dd42d35bd4\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f49ebcb56f1574ca0d7d82dd42d35bd4\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2d8fa74b1f4ca5c076182437449b2295\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2d8fa74b1f4ca5c076182437449b2295\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7ebe4587b02fdf6b712b324d7d3adb55\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\7ebe4587b02fdf6b712b324d7d3adb55\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9db74f6a192d6c861dbf1721badcca78\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\9db74f6a192d6c861dbf1721badcca78\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\59628f70395a84a0d28721f3accb3fb4\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\59628f70395a84a0d28721f3accb3fb4\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2f00b0316b3ea715f1122055364c04a2\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\2f00b0316b3ea715f1122055364c04a2\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\ee4d22f44dcd12677b79fe35321e71a0\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\ee4d22f44dcd12677b79fe35321e71a0\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\5df48f6696b944f805f7daa49922eab6\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\5df48f6696b944f805f7daa49922eab6\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\4483201551c564cefbfcfaf5462afc37\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\4483201551c564cefbfcfaf5462afc37\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\d87b18e27f4cb4f5677c1f8adef99725\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\d87b18e27f4cb4f5677c1f8adef99725\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\387b31e23121137d9749df0d201ada4f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\387b31e23121137d9749df0d201ada4f\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\c72e6779054f809da409cf6a5c7e8b9b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\c72e6779054f809da409cf6a5c7e8b9b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\143e59704d8cb9aab13d5d79e6a54a10\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\143e59704d8cb9aab13d5d79e6a54a10\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\98f1395b58616e73094b39b1afc6f0de\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\98f1395b58616e73094b39b1afc6f0de\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+	android:targetSdkVersion
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\godji\Downloads\관리자료\automail\android-app\app\src\main\AndroidManifest.xml
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\4dac1c648ed47ab80dc73fd21f1f5d3f\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\f80625029a223ca1f6446085fe87fb4d\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\godji\.gradle\caches\8.11.1\transforms\2c0e5ce565d75bfa22b96df232c96979\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
+permission#com.freekitlab.automail.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
+uses-permission#com.freekitlab.automail.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.0] C:\Users\godji\.gradle\caches\8.11.1\transforms\301ce9e5f40bd2d24d1016f76917b2c4\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\godji\.gradle\caches\8.11.1\transforms\9587475b468d9b96a89543e0fd3b364e\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92

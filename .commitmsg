@@ -1,6 +1,8 @@
-feat: 이메일 상세에서 보낸사람 VIP 지정/해제 기능 추가
+feat: Android 앱 + 웹앱 모바일 최적화
 
-- 메시지 보낸사람 이름 옆에 별(★) 버튼으로 VIP 토글
-- VIP 지정 시 amber 색상 VIP 뱃지 표시
-- 주소록에 자동 등록 후 VIP 설정 (미등록 연락처도 즉시 가능)
-- 내가 보낸 메일(나)에는 VIP 버튼 미표시
+- Android WebView 래퍼앱 생성 (com.freekitlab.automail)
+- 앱 모드 감지 (?app=android 파라미터)
+- 앱 모드 전용 플로팅 AI 액션 버튼 (AI 답장/직접 답장/AI 분석)
+- 앱에서 사이드바 기본 닫힘, 스레드 선택 시 자동 닫힘
+- 파일 첨부 지원 (Android file picker 연동)
+- 스와이프 새로고침, 진행바, 쿠키/로컬스토리지 유지

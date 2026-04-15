@@ -1,0 +1,14 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+drawable progress_bar
+id main_container
+id progress_bar
+id swipe_refresh
+id webview
+layout activity_main
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme.AutoMail

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Mail envelope -->
+    <path
+        android:fillColor="#3B82F6"
+        android:pathData="M30,38 L54,55 L78,38 L78,72 Q78,75 75,75 L33,75 Q30,75 30,72 Z"/>
+    <path
+        android:fillColor="#60A5FA"
+        android:pathData="M30,38 Q30,35 33,33 L75,33 Q78,35 78,38 L54,55 Z"/>
+    <!-- AI sparkle -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M72,30 L74,26 L76,30 L80,32 L76,34 L74,38 L72,34 L68,32 Z"/>
+</vector>
