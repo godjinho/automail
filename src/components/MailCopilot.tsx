@@ -226,6 +226,8 @@ export default function MailCopilot() {
   const [aiInstruction, setAiInstruction] = useState("");
   const [aiDrafting, setAiDrafting] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [showReplyChoice, setShowReplyChoice] = useState(false);
+  const [replyChoiceAll, setReplyChoiceAll] = useState(false);
 
   // UI
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -358,7 +360,7 @@ export default function MailCopilot() {
   }
 
   // --- Open Reply Editor ---
-  function openReply(all = false) {
+  function openReply(all = false, useAi = false) {
     if (!threadDetail) return;
     setReplyAll(all);
     const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
@@ -382,7 +384,36 @@ export default function MailCopilot() {
     setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
     setEditorMode("reply");
     setShowAiPanel(false);
-    setTimeout(() => bodyRef.current?.focus(), 100);
+    setShowReplyChoice(false);
+
+    if (useAi) {
+      setEditorBody("");
+      setAiDrafting(true);
+      setEditorMode("reply");
+      const context = threadDetail.messages
+        .map((m) => `보낸사람: ${m.from}\n날짜: ${m.date}\n\n${m.body}`)
+        .join("\n\n---\n\n");
+      fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instruction: "메일 내용을 참고하여 적절한 답장을 작성해줘",
+          context,
+          type: "reply",
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setEditorBody(data.draft || DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
+        })
+        .catch(() => {
+          setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
+          showToast("AI 초안 작성 실패", "error");
+        })
+        .finally(() => setAiDrafting(false));
+    } else {
+      setTimeout(() => bodyRef.current?.focus(), 100);
+    }
   }
 
   // --- Open Compose ---
@@ -772,7 +803,15 @@ export default function MailCopilot() {
                 </div>
 
                 {/* Body */}
-                <div className="mt-2">
+                <div className="mt-2 relative">
+                  {aiDrafting && (
+                    <div className="absolute inset-0 bg-gray-900/80 rounded-xl flex items-center justify-center z-10">
+                      <div className="text-center">
+                        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full mx-auto mb-2" />
+                        <p className="text-sm text-purple-300">AI가 답장을 작성하고 있습니다...</p>
+                      </div>
+                    </div>
+                  )}
                   <textarea ref={bodyRef} value={editorBody}
                     onChange={(e) => setEditorBody(e.target.value)}
                     rows={16}
@@ -790,10 +829,39 @@ export default function MailCopilot() {
                 {/* Action buttons */}
                 <div className="flex items-center gap-3 pt-2">
                   <button onClick={() => setShowConfirm(true)}
-                    disabled={sending || editorTo.length === 0 || !editorBody.trim()}
+                    disabled={sending || editorTo.length === 0 || !editorBody.trim() || aiDrafting}
                     className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-8 py-2.5 rounded-lg font-medium transition cursor-pointer">
                     {editorMode === "reply" ? "답장 보내기" : "메일 보내기"}
                   </button>
+
+                {/* Original thread (reply mode only) */}
+                {editorMode === "reply" && threadDetail && (
+                  <div className="border-t border-gray-800 pt-4 mt-2">
+                    <p className="text-xs text-gray-500 mb-3 font-medium">원본 메일</p>
+                    <div className="space-y-3">
+                      {[...threadDetail.messages].reverse().map((msg) => {
+                        const isMe = session?.user?.email && msg.from.includes(session.user.email);
+                        return (
+                          <div key={msg.id} className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-hidden">
+                            <div className="px-4 py-2 border-b border-gray-800/50 flex justify-between items-start gap-2">
+                              <div className="min-w-0">
+                                <span className={`text-xs font-medium ${isMe ? "text-blue-300" : "text-gray-300"}`}>
+                                  {extractName(msg.from)}
+                                  {isMe && <span className="text-[10px] text-blue-500 ml-1">나</span>}
+                                </span>
+                                <p className="text-[10px] text-gray-600 truncate">{extractEmail(msg.from)} &rarr; {extractEmail(msg.to)}</p>
+                              </div>
+                              <span className="text-[10px] text-gray-600 shrink-0">{formatFullDate(msg.date)}</span>
+                            </div>
+                            <div className="px-4 py-3">
+                              <pre className="text-xs text-gray-400 whitespace-pre-wrap font-sans leading-relaxed">{msg.body || "(본문 없음)"}</pre>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                   <button onClick={() => setEditorMode(null)}
                     className="text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer">
                     취소
@@ -832,11 +900,11 @@ export default function MailCopilot() {
                   <p className="text-xs text-gray-500">{threadDetail.messages.length}개 메시지</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                  <button onClick={() => openReply(false)}
+                  <button onClick={() => { setReplyChoiceAll(false); setShowReplyChoice(true); }}
                     className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded font-medium transition cursor-pointer">
                     답장
                   </button>
-                  <button onClick={() => openReply(true)}
+                  <button onClick={() => { setReplyChoiceAll(true); setShowReplyChoice(true); }}
                     className="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition cursor-pointer">
                     전체답장
                   </button>
@@ -849,6 +917,31 @@ export default function MailCopilot() {
             </div>
 
             <div className="p-4 md:p-6 space-y-4">
+              {/* Reply choice modal */}
+              {showReplyChoice && (
+                <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 space-y-3">
+                  <h3 className="text-sm font-bold text-gray-200">
+                    {replyChoiceAll ? "전체 답장" : "답장"} 방식을 선택하세요
+                  </h3>
+                  <div className="flex gap-3">
+                    <button onClick={() => openReply(replyChoiceAll, false)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-medium text-sm transition cursor-pointer flex flex-col items-center gap-1">
+                      <span className="text-lg">&#9997;</span>
+                      직접 작성
+                    </button>
+                    <button onClick={() => openReply(replyChoiceAll, true)}
+                      className="flex-1 bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-medium text-sm transition cursor-pointer flex flex-col items-center gap-1">
+                      <span className="text-lg">&#10024;</span>
+                      AI 답장
+                    </button>
+                  </div>
+                  <button onClick={() => setShowReplyChoice(false)}
+                    className="text-xs text-gray-500 hover:text-gray-300 transition cursor-pointer w-full text-center mt-1">
+                    취소
+                  </button>
+                </div>
+              )}
+
               {/* AI Analysis (if requested) */}
               {analysis && (
                 <div className="bg-purple-950/20 border border-purple-800/40 rounded-xl p-4 md:p-5 space-y-4">
