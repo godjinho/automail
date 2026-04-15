@@ -1,6 +1,4 @@
-feat: 예약 보내기 UI 개선 - 달력/시간 선택 팝업
+fix: 별표 기능 500 에러 수정 - gmail.modify 스코프 추가
 
-- datetime-local 대신 date + time 분리 입력
-- 예약 보내기 버튼 클릭 시 팝업으로 날짜/시간 선택
-- 빠른 선택 프리셋 (내일 오전 9시, 내일 오후 2시, 월요일 오전 9시)
-- 선택된 날짜/시간 미리보기 표시
+gmail.readonly → gmail.modify로 변경하여 라벨 수정 권한 확보
+(별표 토글은 messages.modify API를 사용하므로 modify 스코프 필요)
