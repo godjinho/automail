@@ -5,6 +5,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Attachment, fileToAttachment, validateAttachments, formatFileSize, sendMailDirect,
 } from "@/lib/mail-client";
+import {
+  searchContacts, getContacts, getVipEmails, saveRecipientsFromSend,
+  toggleVip, deleteContact, Contact,
+} from "@/lib/address-book";
 
 // --- Email Tag Input Component ---
 function EmailTagInput({
@@ -21,7 +25,32 @@ function EmailTagInput({
   autoFocus?: boolean;
 }) {
   const [inputValue, setInputValue] = useState("");
+  const [suggestions, setSuggestions] = useState<Contact[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (inputValue.length >= 1) {
+      const results = searchContacts(inputValue).filter((c) => !emails.includes(c.email));
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+      setSelectedSuggestion(-1);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [inputValue, emails]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function addEmails(raw: string) {
     const parts = raw.split(/[;,\s]+/).map((s) => s.trim()).filter(Boolean);
@@ -32,15 +61,45 @@ function EmailTagInput({
       onChange([...emails, ...newEmails]);
     }
     setInputValue("");
+    setShowSuggestions(false);
+  }
+
+  function selectSuggestion(contact: Contact) {
+    if (!emails.includes(contact.email)) {
+      onChange([...emails, contact.email]);
+    }
+    setInputValue("");
+    setShowSuggestions(false);
+    inputRef.current?.focus();
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (showSuggestions && suggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedSuggestion((p) => Math.min(p + 1, suggestions.length - 1));
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedSuggestion((p) => Math.max(p - 1, -1));
+        return;
+      }
+      if (e.key === "Enter" && selectedSuggestion >= 0) {
+        e.preventDefault();
+        selectSuggestion(suggestions[selectedSuggestion]);
+        return;
+      }
+    }
     if (e.key === "Enter" || e.key === ";" || e.key === ",") {
       e.preventDefault();
       if (inputValue.trim()) addEmails(inputValue);
     }
     if (e.key === "Backspace" && !inputValue && emails.length > 0) {
       onChange(emails.slice(0, -1));
+    }
+    if (e.key === "Escape") {
+      setShowSuggestions(false);
     }
   }
 
@@ -61,37 +120,71 @@ function EmailTagInput({
 
   function handleBlur() {
     if (inputValue.trim()) addEmails(inputValue);
+    setTimeout(() => setShowSuggestions(false), 150);
+  }
+
+  function handleFocus() {
+    if (inputValue.length >= 1) {
+      const results = searchContacts(inputValue).filter((c) => !emails.includes(c.email));
+      if (results.length > 0) { setSuggestions(results); setShowSuggestions(true); }
+    }
   }
 
   function removeEmail(idx: number) {
     onChange(emails.filter((_, i) => i !== idx));
   }
 
+  const vipEmails = getVipEmails();
+
   return (
-    <div
-      onClick={() => inputRef.current?.focus()}
-      className="flex-1 flex flex-wrap items-center gap-1.5 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 min-h-[38px] focus-within:border-blue-500 transition cursor-text"
-    >
-      {emails.map((email, i) => (
-        <span key={i} className="inline-flex items-center gap-1 bg-blue-600/20 text-blue-300 text-xs px-2 py-1 rounded-md border border-blue-500/30 max-w-[220px]">
-          <span className="truncate">{email}</span>
-          <button type="button" onClick={(e) => { e.stopPropagation(); removeEmail(i); }}
-            className="text-blue-400 hover:text-white transition cursor-pointer text-xs leading-none ml-0.5">&times;</button>
-        </span>
-      ))}
-      <input
-        ref={inputRef}
-        id={id}
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        onBlur={handleBlur}
-        autoFocus={autoFocus}
-        placeholder={emails.length === 0 ? placeholder : ""}
-        className="flex-1 min-w-[120px] bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-600"
-      />
+    <div ref={wrapRef} className="flex-1 relative">
+      <div
+        onClick={() => inputRef.current?.focus()}
+        className="flex flex-wrap items-center gap-1.5 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 min-h-[38px] focus-within:border-blue-500 transition cursor-text"
+      >
+        {emails.map((email, i) => (
+          <span key={i} className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md max-w-[220px] border ${
+            vipEmails.includes(email) ? "bg-amber-600/20 text-amber-300 border-amber-500/30" : "bg-blue-600/20 text-blue-300 border-blue-500/30"
+          }`}>
+            {vipEmails.includes(email) && <span className="text-amber-400 text-[10px]">&#9733;</span>}
+            <span className="truncate">{email}</span>
+            <button type="button" onClick={(e) => { e.stopPropagation(); removeEmail(i); }}
+              className="text-current hover:text-white transition cursor-pointer text-xs leading-none ml-0.5 opacity-60 hover:opacity-100">&times;</button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          id={id}
+          type="text"
+          value={inputValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          autoFocus={autoFocus}
+          autoComplete="off"
+          placeholder={emails.length === 0 ? placeholder : ""}
+          className="flex-1 min-w-[120px] bg-transparent text-sm text-gray-200 outline-none placeholder:text-gray-600"
+        />
+      </div>
+
+      {showSuggestions && (
+        <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden max-h-[200px] overflow-y-auto">
+          {suggestions.map((c, i) => (
+            <button key={c.email}
+              onMouseDown={(e) => { e.preventDefault(); selectSuggestion(c); }}
+              className={`w-full text-left px-3 py-2 text-sm transition cursor-pointer flex items-center gap-2 ${
+                i === selectedSuggestion ? "bg-blue-600/30" : "hover:bg-gray-800"
+              }`}>
+              {c.vip && <span className="text-amber-400 text-xs">&#9733;</span>}
+              <span className="text-gray-300 truncate">{c.name || c.email}</span>
+              {c.name && <span className="text-gray-600 text-xs truncate">{c.email}</span>}
+              <span className="ml-auto text-[10px] text-gray-600 shrink-0">{c.count}회</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -135,13 +228,14 @@ interface Analysis {
   urgency: "high" | "medium" | "low";
 }
 
-type Label = "INBOX" | "SENT" | "STARRED";
+type Label = "INBOX" | "SENT" | "STARRED" | "VIP";
 type EditorMode = "reply" | "compose" | null;
 
 const LABEL_ITEMS: { key: Label; label: string; icon: string }[] = [
   { key: "INBOX", label: "받은편지함", icon: "&#9993;" },
   { key: "SENT", label: "보낸편지함", icon: "&#10148;" },
   { key: "STARRED", label: "별표", icon: "&#9733;" },
+  { key: "VIP", label: "VIP", icon: "&#9733;" },
 ];
 
 const URGENCY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -242,6 +336,8 @@ export default function MailCopilot() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showContacts, setShowContacts] = useState(false);
+  const [contactList, setContactList] = useState<Contact[]>([]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -303,9 +399,22 @@ export default function MailCopilot() {
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (query) params.set("q", query);
+
+      if (query) {
+        params.set("q", query);
+      } else if (label === "VIP") {
+        const vips = getVipEmails();
+        if (vips.length === 0) {
+          setThreads([]);
+          setLoading(false);
+          return;
+        }
+        params.set("q", "from:(" + vips.join(" OR ") + ")");
+      } else {
+        params.set("label", label);
+      }
+
       if (append && nextPageToken) params.set("pageToken", nextPageToken);
-      if (!query) params.set("label", label);
       const res = await fetch(`/api/threads?${params}`);
       if (!res.ok) {
         const data = await res.json();
@@ -613,6 +722,11 @@ export default function MailCopilot() {
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
       }
+      saveRecipientsFromSend(
+        editorTo.join(","),
+        editorCc.join(","),
+        editorBcc.join(","),
+      );
       showToast(editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다", "success");
       setShowConfirm(false);
       setEditorMode(null);
@@ -738,6 +852,57 @@ export default function MailCopilot() {
         </div>
       )}
 
+      {/* Contacts Modal */}
+      {showContacts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowContacts(false)}>
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-5 max-w-lg w-full mx-4 shadow-2xl max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">주소록 관리</h3>
+              <button onClick={() => setShowContacts(false)}
+                className="text-gray-500 hover:text-white transition cursor-pointer text-xl">&times;</button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">메일 전송 시 수신자가 자동으로 저장됩니다. VIP로 설정하면 VIP 탭에서 해당 연락처의 메일만 모아볼 수 있습니다.</p>
+
+            {contactList.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-gray-600 text-sm py-8">
+                저장된 연락처가 없습니다
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto space-y-1">
+                {contactList.map((c) => (
+                  <div key={c.email} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
+                    c.vip ? "bg-amber-600/10 border border-amber-500/20" : "bg-gray-800/50 border border-transparent hover:bg-gray-800"
+                  }`}>
+                    <button onClick={() => {
+                        toggleVip(c.email);
+                        setContactList(getContacts());
+                      }}
+                      className={`text-lg transition cursor-pointer shrink-0 ${
+                        c.vip ? "text-amber-400 hover:text-amber-300" : "text-gray-600 hover:text-amber-400"
+                      }`} title={c.vip ? "VIP 해제" : "VIP 설정"}>
+                      &#9733;
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-200 truncate">{c.email}</p>
+                      {c.name && <p className="text-xs text-gray-500 truncate">{c.name}</p>}
+                    </div>
+                    <span className="text-[10px] text-gray-600 shrink-0">{c.count}회</span>
+                    <button onClick={() => {
+                        deleteContact(c.email);
+                        setContactList(getContacts());
+                      }}
+                      className="text-gray-600 hover:text-red-400 transition cursor-pointer text-sm shrink-0" title="삭제">
+                      &#128465;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Mobile sidebar toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)}
         className="md:hidden fixed top-3 left-3 z-30 bg-gray-800 p-2 rounded-lg cursor-pointer">
@@ -769,8 +934,14 @@ export default function MailCopilot() {
 
           {/* Compose button */}
           <button onClick={openCompose}
-            className="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer mb-3 flex items-center justify-center gap-2">
+            className="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer mb-2 flex items-center justify-center gap-2">
             <span className="text-lg leading-none">+</span> 새 메일 작성
+          </button>
+
+          {/* Contacts button */}
+          <button onClick={() => { setContactList(getContacts()); setShowContacts(true); }}
+            className="w-full bg-gray-800 hover:bg-gray-700 py-2 rounded-xl text-xs text-gray-400 transition cursor-pointer mb-3 flex items-center justify-center gap-1.5">
+            <span>&#128209;</span> 주소록 관리
           </button>
 
           {/* Label filter */}
@@ -780,7 +951,8 @@ export default function MailCopilot() {
                 className={`flex-1 text-xs py-1.5 rounded-lg transition cursor-pointer ${
                   label === item.key && !searchQuery ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                 }`}>
-                <span dangerouslySetInnerHTML={{ __html: item.icon }} className="mr-1" />
+                <span dangerouslySetInnerHTML={{ __html: item.icon }}
+                  className={`mr-1 ${item.key === "VIP" ? "text-amber-400" : ""}`} />
                 {item.label}
               </button>
             ))}
