@@ -488,11 +488,7 @@ export default function MailCopilot() {
               <h1 className="text-lg font-bold">Automail</h1>
               <p className="text-xs text-gray-500">{session.user?.email}</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={openCompose}
-                className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded font-medium transition cursor-pointer">
-                새 메일
-              </button>
+            <div className="flex gap-2 items-center">
               <button onClick={() => signIn("google", undefined, { prompt: "select_account" })}
                 className="text-xs text-blue-400 hover:text-blue-300 transition cursor-pointer">
                 계정전환
@@ -503,6 +499,12 @@ export default function MailCopilot() {
               </button>
             </div>
           </div>
+
+          {/* Compose button */}
+          <button onClick={openCompose}
+            className="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer mb-3 flex items-center justify-center gap-2">
+            <span className="text-lg leading-none">+</span> 새 메일 작성
+          </button>
 
           {/* Label filter */}
           <div className="flex gap-1 mb-3">
@@ -728,9 +730,13 @@ export default function MailCopilot() {
           </div>
         ) : !threadDetail ? (
           <div className="flex-1 flex items-center justify-center text-gray-600">
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-4">
               <div className="text-5xl opacity-30">&#9993;</div>
               <p className="text-xl">메일을 선택하세요</p>
+              <button onClick={openCompose}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer inline-flex items-center gap-2">
+                <span className="text-lg leading-none">+</span> 새 메일 작성
+              </button>
               <p className="text-sm text-gray-700">j/k로 이동 · / 검색 · Esc 닫기</p>
             </div>
           </div>
