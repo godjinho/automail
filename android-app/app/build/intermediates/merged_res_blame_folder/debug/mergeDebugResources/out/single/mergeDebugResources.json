@@ -1,50 +1,50 @@
 [
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/layout_activity_main.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/layout/activity_main.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xxhdpi_ic_launcher_round.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xxhdpi/ic_launcher_round.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xhdpi_ic_launcher.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xhdpi/ic_launcher.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xxhdpi_ic_launcher.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xxhdpi/ic_launcher.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/drawable_progress_bar.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/drawable/progress_bar.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xxxhdpi_ic_launcher_round.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xxxhdpi/ic_launcher_round.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-hdpi_ic_launcher_round.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-hdpi/ic_launcher_round.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/drawable/ic_launcher_foreground.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xxxhdpi_ic_launcher_round.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xxxhdpi/ic_launcher_round.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xxhdpi_ic_launcher_round.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xxhdpi/ic_launcher_round.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/layout_activity_main.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/layout/activity_main.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/drawable/ic_launcher_background.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xhdpi_ic_launcher.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xhdpi/ic_launcher.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-hdpi_ic_launcher.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-hdpi/ic_launcher.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-hdpi_ic_launcher.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-hdpi/ic_launcher.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xhdpi_ic_launcher_round.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xhdpi/ic_launcher_round.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-hdpi_ic_launcher_round.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-hdpi/ic_launcher_round.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xxhdpi_ic_launcher.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xxhdpi/ic_launcher.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/drawable_progress_bar.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/drawable/progress_bar.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xxxhdpi_ic_launcher.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xxxhdpi/ic_launcher.xml"
     },
     {
-        "merged": "com.freekitlab.automail.app-debug-33:/mipmap-xxxhdpi_ic_launcher.xml.flat",
-        "source": "com.freekitlab.automail.app-main-35:/mipmap-xxxhdpi/ic_launcher.xml"
+        "merged": "com.freekitlab.automail.app-debug-34:/mipmap-xhdpi_ic_launcher_round.xml.flat",
+        "source": "com.freekitlab.automail.app-main-36:/mipmap-xhdpi/ic_launcher_round.xml"
     }
 ]

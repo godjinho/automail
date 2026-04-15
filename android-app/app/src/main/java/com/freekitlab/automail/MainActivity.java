@@ -7,10 +7,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -20,6 +20,8 @@ import android.widget.ProgressBar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
+import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
     private ValueCallback<Uri[]> fileCallback;
+    private boolean authInProgress = false;
 
     private final ActivityResultLauncher<Intent> filePicker =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -77,12 +80,30 @@ public class MainActivity extends AppCompatActivity {
 
         swipeRefresh.setColorSchemeColors(0xFF3B82F6);
         swipeRefresh.setProgressBackgroundColorSchemeColor(0xFF1a1a2e);
-        swipeRefresh.setOnRefreshListener(() -> {
-            webView.reload();
-        });
+        swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
         setupWebView();
-        webView.loadUrl(BASE_URL + APP_PARAM);
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        Uri data = intent.getData();
+        if (data != null && data.toString().contains("/api/auth/callback")) {
+            authInProgress = false;
+            webView.loadUrl(data.toString());
+        } else if (!authInProgress) {
+            String currentUrl = webView.getUrl();
+            if (currentUrl == null || currentUrl.equals("about:blank")) {
+                webView.loadUrl(BASE_URL + APP_PARAM);
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -99,6 +120,14 @@ public class MainActivity extends AppCompatActivity {
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
         settings.setSupportZoom(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        String ua = settings.getUserAgentString();
+        if (ua.contains("; wv)")) {
+            ua = ua.replace("; wv)", ")");
+        }
+        ua = ua + " AutoMailApp/1.0";
+        settings.setUserAgentString(ua);
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -108,12 +137,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (url.startsWith(BASE_URL) || url.contains("accounts.google.com") ||
-                        url.contains("googleapis.com") || url.contains("vercel.app")) {
+
+                if (isGoogleAuthUrl(url)) {
+                    openInCustomTab(url);
+                    return true;
+                }
+
+                if (url.startsWith(BASE_URL) || url.contains("vercel.app")) {
                     return false;
                 }
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                startActivity(intent);
+
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                } catch (Exception ignored) {}
                 return true;
             }
 
@@ -122,6 +158,14 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 swipeRefresh.setRefreshing(false);
                 injectAppStyles();
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    swipeRefresh.setRefreshing(false);
+                }
             }
         });
 
@@ -154,13 +198,36 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private boolean isGoogleAuthUrl(String url) {
+        return url.contains("accounts.google.com") ||
+                url.contains("/api/auth/signin") ||
+                (url.contains("/api/auth/callback") && url.contains("google"));
+    }
+
+    private void openInCustomTab(String url) {
+        authInProgress = true;
+        CustomTabColorSchemeParams colorParams = new CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(0xFF0a0a0a)
+                .setNavigationBarColor(0xFF0a0a0a)
+                .build();
+
+        CustomTabsIntent customTab = new CustomTabsIntent.Builder()
+                .setDefaultColorSchemeParams(colorParams)
+                .setColorScheme(CustomTabsIntent.COLOR_SCHEME_DARK)
+                .setShowTitle(true)
+                .setUrlBarHidingEnabled(true)
+                .build();
+
+        customTab.launchUrl(this, Uri.parse(url));
+    }
+
     private void injectAppStyles() {
         String css = "body{-webkit-tap-highlight-color:transparent;overscroll-behavior:none;}"
                 + "*{-webkit-user-select:auto!important;}"
                 + "::-webkit-scrollbar{width:3px;}"
                 + "::-webkit-scrollbar-thumb{background:#333;border-radius:3px;}";
 
-        String js = "javascript:(function(){"
+        String js = "(function(){"
                 + "var s=document.createElement('style');"
                 + "s.textContent='" + css + "';"
                 + "document.head.appendChild(s);"
@@ -173,6 +240,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack();

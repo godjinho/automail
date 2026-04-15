@@ -32,11 +32,24 @@
             android:name="com.freekitlab.automail.MainActivity"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
             android:exported="true"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Deep link: catch OAuth callback redirect back to app -->
+            <intent-filter android:autoVerify="true" >
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="automail-a.vercel.app"
+                    android:pathPrefix="/api/auth/callback"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
 

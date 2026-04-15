@@ -1,8 +1,6 @@
-feat: Android 앱 + 웹앱 모바일 최적화
+fix: Android 앱 OAuth 로그인 문제 해결
 
-- Android WebView 래퍼앱 생성 (com.freekitlab.automail)
-- 앱 모드 감지 (?app=android 파라미터)
-- 앱 모드 전용 플로팅 AI 액션 버튼 (AI 답장/직접 답장/AI 분석)
-- 앱에서 사이드바 기본 닫힘, 스레드 선택 시 자동 닫힘
-- 파일 첨부 지원 (Android file picker 연동)
-- 스와이프 새로고침, 진행바, 쿠키/로컬스토리지 유지
+- Google OAuth URL을 Chrome Custom Tabs로 열어서 disallowed_useragent 회피
+- WebView user-agent에서 "wv" 제거 (WebView 탐지 우회)
+- launchMode=singleTask + 딥링크로 인증 콜백을 앱으로 리턴
+- androidx.browser:browser 의존성 추가
