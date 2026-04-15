@@ -1,14 +1,22 @@
 import OpenAI from "openai";
 import type { ThreadDetail } from "./gmail";
 
-const openaiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let _openaiClient: OpenAI | null = null;
+let _deepseekClient: OpenAI | null = null;
 
-const deepseekClient = new OpenAI({
-  apiKey: process.env.DEEPSEEK_API_KEY,
-  baseURL: "https://api.deepseek.com",
-});
+function getOpenAI() {
+  if (!_openaiClient) {
+    _openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openaiClient;
+}
+
+function getDeepSeek() {
+  if (!_deepseekClient) {
+    _deepseekClient = new OpenAI({ apiKey: process.env.DEEPSEEK_API_KEY, baseURL: "https://api.deepseek.com" });
+  }
+  return _deepseekClient;
+}
 
 export type ReplyTone = "formal" | "friendly" | "concise" | "detailed";
 
@@ -144,7 +152,7 @@ async function runAnalysis(
   ];
 
   try {
-    const res = await deepseekClient.chat.completions.create({
+    const res = await getDeepSeek().chat.completions.create({
       model: "deepseek-chat",
       messages,
       max_tokens: 1500,
@@ -153,7 +161,7 @@ async function runAnalysis(
     return parseAnalysis(res.choices[0]?.message?.content || "");
   } catch (err) {
     console.error("DeepSeek failed, falling back to GPT:", err);
-    const res = await openaiClient.chat.completions.create({
+    const res = await getOpenAI().chat.completions.create({
       model: "gpt-4.1-mini",
       messages,
       max_tokens: 1500,
