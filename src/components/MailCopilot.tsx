@@ -412,6 +412,10 @@ export default function MailCopilot() {
                 className="text-xs bg-gray-800 hover:bg-gray-700 disabled:opacity-50 px-3 py-1.5 rounded transition cursor-pointer">
                 {loading ? "..." : "새로고침"}
               </button>
+              <button onClick={() => signIn("google", undefined, { prompt: "select_account" })}
+                className="text-xs text-blue-400 hover:text-blue-300 transition cursor-pointer">
+                계정전환
+              </button>
               <button onClick={() => signOut()}
                 className="text-xs text-gray-500 hover:text-gray-300 transition cursor-pointer">
                 로그아웃
