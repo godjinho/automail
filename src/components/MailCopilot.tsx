@@ -7,7 +7,7 @@ import {
 } from "@/lib/mail-client";
 import {
   searchContacts, getContacts, getVipEmails, saveRecipientsFromSend,
-  toggleVip, deleteContact, Contact,
+  toggleVip, deleteContact, addOrUpdateContact, Contact,
 } from "@/lib/address-book";
 
 // --- Email Tag Input Component ---
@@ -340,6 +340,11 @@ export default function MailCopilot() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showContacts, setShowContacts] = useState(false);
   const [contactList, setContactList] = useState<Contact[]>([]);
+  const [vipSet, setVipSet] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setVipSet(new Set(getVipEmails()));
+  }, [showContacts]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -770,6 +775,13 @@ export default function MailCopilot() {
         prev.map((t) => (t.id === threadId ? { ...t, isStarred: currentStarred } : t))
       );
     }
+  }
+
+  function handleToggleVip(email: string) {
+    const addr = extractEmail(email).toLowerCase();
+    addOrUpdateContact(addr, extractName(email));
+    toggleVip(addr);
+    setVipSet(new Set(getVipEmails()));
   }
 
   function handleLabelChange(newLabel: Label) {
@@ -1446,6 +1458,8 @@ export default function MailCopilot() {
               {threadDetail.messages.map((msg, i) => {
                 const isMe = session.user?.email && msg.from.includes(session.user.email);
                 const isLast = i === threadDetail.messages.length - 1;
+                const senderEmail = extractEmail(msg.from).toLowerCase();
+                const senderIsVip = vipSet.has(senderEmail);
                 return (
                   <div key={msg.id} className={`bg-gray-900 rounded-xl border ${isLast ? "border-gray-700" : "border-gray-800"} overflow-hidden`}>
                     <div className="px-4 md:px-5 py-3 border-b border-gray-800/50 flex justify-between items-start gap-3">
@@ -1455,6 +1469,17 @@ export default function MailCopilot() {
                             {extractName(msg.from)}
                           </span>
                           {isMe && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">나</span>}
+                          {!isMe && (
+                            <button onClick={() => handleToggleVip(msg.from)}
+                              className={`text-sm transition cursor-pointer ${
+                                senderIsVip ? "text-amber-400 hover:text-amber-300" : "text-gray-700 hover:text-amber-400"
+                              }`} title={senderIsVip ? "VIP 해제" : "VIP 지정"}>
+                              &#9733;
+                            </button>
+                          )}
+                          {senderIsVip && !isMe && (
+                            <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium">VIP</span>
+                          )}
                         </div>
                         <p className="text-[11px] text-gray-600 truncate">
                           {extractEmail(msg.from)}
