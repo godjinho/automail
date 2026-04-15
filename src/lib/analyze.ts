@@ -218,16 +218,40 @@ export interface DraftRequest {
   type: "reply" | "compose";
 }
 
-export async function draftEmail(req: DraftRequest): Promise<string> {
+export interface DraftResult {
+  body: string;
+  subject?: string;
+}
+
+const COMPOSE_SYSTEM_PROMPT = `당신은 비즈니스 이메일 작성 비서입니다.
+작성자: 유진호
+기본 톤: 공손하고 격식 있는 비즈니스 한국어
+
+규칙:
+- 본문은 반드시 "안녕하세요, 유진호 입니다.\n\n" 로 시작
+- 본문 작성
+- 본문 끝에 "\n\n유진호 올림" 으로 마무리
+- 서명 아래에는 아무것도 넣지 마세요 (footer는 시스템이 자동 추가)
+- 사용자의 구체적인 지시가 있으면 그에 맞게 작성하세요
+- 구체적 지시가 없으면 일반적인 비즈니스 이메일 틀을 작성하세요
+
+새 메일 작성 시 반드시 아래 JSON 형식으로 출력하세요:
+{"subject": "이메일 제목", "body": "이메일 본문 전체"}`;
+
+export async function draftEmail(req: DraftRequest): Promise<DraftResult> {
+  const isCompose = req.type === "compose";
+  const systemPrompt = isCompose ? COMPOSE_SYSTEM_PROMPT : DRAFT_SYSTEM_PROMPT;
+
   const userPrompt = req.context
-    ? `[${req.type === "reply" ? "회신" : "새 메일"} 작성 요청]\n\n지시: ${req.instruction}\n\n참고 메일 내용:\n${req.context}`
+    ? `[${isCompose ? "새 메일" : "회신"} 작성 요청]\n\n지시: ${req.instruction}\n\n참고 메일 내용:\n${req.context}`
     : `[새 메일 작성 요청]\n\n지시: ${req.instruction}`;
 
   const messages: { role: "system" | "user"; content: string }[] = [
-    { role: "system", content: DRAFT_SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     { role: "user", content: userPrompt },
   ];
 
+  let raw = "";
   try {
     const res = await getDeepSeek().chat.completions.create({
       model: "deepseek-chat",
@@ -235,7 +259,7 @@ export async function draftEmail(req: DraftRequest): Promise<string> {
       max_tokens: 2000,
       temperature: 0.4,
     });
-    return res.choices[0]?.message?.content?.trim() || "";
+    raw = res.choices[0]?.message?.content?.trim() || "";
   } catch {
     const res = await getOpenAI().chat.completions.create({
       model: "gpt-4.1-mini",
@@ -243,6 +267,18 @@ export async function draftEmail(req: DraftRequest): Promise<string> {
       max_tokens: 2000,
       temperature: 0.4,
     });
-    return res.choices[0]?.message?.content?.trim() || "";
+    raw = res.choices[0]?.message?.content?.trim() || "";
   }
+
+  if (isCompose) {
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return { subject: parsed.subject || "", body: parsed.body || "" };
+      }
+    } catch { /* fall through */ }
+  }
+
+  return { body: raw };
 }

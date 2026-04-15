@@ -229,6 +229,11 @@ export default function MailCopilot() {
   const [showReplyChoice, setShowReplyChoice] = useState(false);
   const [replyChoiceAll, setReplyChoiceAll] = useState(false);
 
+  // Schedule
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTimer, setScheduleTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [scheduleRemaining, setScheduleRemaining] = useState<string | null>(null);
+
   // UI
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -404,7 +409,7 @@ export default function MailCopilot() {
       })
         .then((r) => r.json())
         .then((data) => {
-          setEditorBody(data.draft || DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
+          setEditorBody(data.body || data.draft || DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
         })
         .catch(() => {
           setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
@@ -455,7 +460,10 @@ export default function MailCopilot() {
       });
       if (!res.ok) throw new Error("AI 작성 실패");
       const data = await res.json();
-      setEditorBody(data.draft);
+      setEditorBody(data.body || data.draft || "");
+      if (data.subject && editorMode === "compose") {
+        setEditorSubject(data.subject);
+      }
       setAiInstruction("");
       setShowAiPanel(false);
       showToast("AI 초안 작성 완료", "success");
@@ -464,6 +472,58 @@ export default function MailCopilot() {
     } finally {
       setAiDrafting(false);
     }
+  }
+
+  // --- Schedule Send ---
+  const scheduleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function cancelSchedule() {
+    if (scheduleTimer) { clearTimeout(scheduleTimer); setScheduleTimer(null); }
+    if (scheduleIntervalRef.current) { clearInterval(scheduleIntervalRef.current); scheduleIntervalRef.current = null; }
+    setScheduleRemaining(null);
+    setScheduleDate("");
+  }
+
+  function formatRemaining(ms: number): string {
+    if (ms <= 0) return "전송 중...";
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    if (h > 0) return `${h}시간 ${m}분 후 전송`;
+    if (m > 0) return `${m}분 ${s}초 후 전송`;
+    return `${s}초 후 전송`;
+  }
+
+  function handleScheduleSend() {
+    if (!scheduleDate || editorTo.length === 0 || !editorBody.trim()) return;
+    const targetTime = new Date(scheduleDate).getTime();
+    const now = Date.now();
+    const delay = targetTime - now;
+    if (delay <= 0) {
+      showToast("예약 시간이 현재보다 이후여야 합니다", "error");
+      return;
+    }
+
+    setShowConfirm(false);
+    const timer = setTimeout(() => {
+      handleSend();
+      cancelSchedule();
+      showToast("예약된 메일이 전송되었습니다", "success");
+    }, delay);
+    setScheduleTimer(timer);
+    setScheduleRemaining(formatRemaining(delay));
+
+    scheduleIntervalRef.current = setInterval(() => {
+      const remaining = targetTime - Date.now();
+      if (remaining <= 0) {
+        if (scheduleIntervalRef.current) clearInterval(scheduleIntervalRef.current);
+        setScheduleRemaining("전송 중...");
+      } else {
+        setScheduleRemaining(formatRemaining(remaining));
+      }
+    }, 1000);
+
+    showToast(`${new Date(scheduleDate).toLocaleString("ko-KR")}에 전송 예약됨`, "success");
   }
 
   // --- Send ---
@@ -861,13 +921,49 @@ export default function MailCopilot() {
                   <p><a href="https://freekitlab.com/" className="text-blue-400">freekitlab.com</a> &nbsp;|&nbsp; Tel. 010-7207-5808</p>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex items-center gap-3 pt-2">
-                  <button onClick={() => setShowConfirm(true)}
-                    disabled={sending || editorTo.length === 0 || !editorBody.trim() || aiDrafting}
-                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-8 py-2.5 rounded-lg font-medium transition cursor-pointer">
-                    {editorMode === "reply" ? "답장 보내기" : "메일 보내기"}
-                  </button>
+                {/* Action buttons + Schedule */}
+                <div className="space-y-3 pt-2">
+                  {/* Schedule indicator */}
+                  {scheduleRemaining && (
+                    <div className="bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-400 text-sm">&#9200;</span>
+                        <span className="text-sm text-amber-300">{scheduleRemaining}</span>
+                      </div>
+                      <button onClick={cancelSchedule}
+                        className="text-xs text-amber-400 hover:text-amber-200 transition cursor-pointer">
+                        예약 취소
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button onClick={() => setShowConfirm(true)}
+                      disabled={sending || editorTo.length === 0 || !editorBody.trim() || aiDrafting || !!scheduleRemaining}
+                      className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-8 py-2.5 rounded-lg font-medium transition cursor-pointer">
+                      {editorMode === "reply" ? "답장 보내기" : "메일 보내기"}
+                    </button>
+
+                    {!scheduleRemaining && (
+                      <div className="flex items-center gap-2">
+                        <input type="datetime-local" value={scheduleDate}
+                          onChange={(e) => setScheduleDate(e.target.value)}
+                          min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                          className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-amber-500 transition cursor-pointer" />
+                        <button onClick={handleScheduleSend}
+                          disabled={!scheduleDate || editorTo.length === 0 || !editorBody.trim() || aiDrafting}
+                          className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer whitespace-nowrap">
+                          예약 보내기
+                        </button>
+                      </div>
+                    )}
+
+                    <button onClick={() => { cancelSchedule(); setEditorMode(null); }}
+                      className="text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer">
+                      취소
+                    </button>
+                  </div>
+                </div>
 
                 {/* Original thread (reply mode only) */}
                 {editorMode === "reply" && threadDetail && (
@@ -897,11 +993,6 @@ export default function MailCopilot() {
                     </div>
                   </div>
                 )}
-                  <button onClick={() => setEditorMode(null)}
-                    className="text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer">
-                    취소
-                  </button>
-                </div>
               </div>
             </div>
           </div>

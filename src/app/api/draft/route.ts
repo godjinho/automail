@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
   const { instruction, context, type } = await request.json();
 
   try {
-    const draft = await draftEmail({ instruction, context, type });
-    return NextResponse.json({ draft });
+    const result = await draftEmail({ instruction: instruction || "", context, type: type || "compose" });
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Draft error:", error);
     return NextResponse.json({ error: error.message || "작성 실패" }, { status: 500 });
