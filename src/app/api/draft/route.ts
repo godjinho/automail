@@ -11,10 +11,6 @@ export async function POST(request: NextRequest) {
 
   const { instruction, context, type } = await request.json();
 
-  if (!instruction) {
-    return NextResponse.json({ error: "작성 지시가 필요합니다" }, { status: 400 });
-  }
-
   try {
     const draft = await draftEmail({ instruction, context, type });
     return NextResponse.json({ draft });

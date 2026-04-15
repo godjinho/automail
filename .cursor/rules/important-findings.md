@@ -57,3 +57,20 @@
 - 401 → signIn("google") 자동 호출
 - 429 → "요청이 너무 많습니다" 사용자 안내
 - invalid_grant → "인증 만료" 안내
+
+### 서비스 방향 전환 (3차)
+- 기존: AI 자동분석 중심 → 스레드 클릭하면 바로 분석 시작
+- 변경: 사용자 작업공간 → 스레드 클릭하면 메일 내용만 표시
+- AI 분석은 "AI 분석" 버튼을 누를 때만 /api/threads/[id]?analyze=true로 호출
+- AI 초안 작성은 /api/draft POST로 별도 분리
+- 회신/새메일 에디터: To/CC/BCC 필드 포함, EditorMode로 상태 관리
+- HTML 메일 전송: multipart/alternative (text/plain + text/html)
+- 기본 서명 규칙: "안녕하세요, 유진호 입니다." → 본문 → "유진호 올림"
+- 자동 푸터: freekitlab.com | 010-7207-5808
+- 글씨체: 맑은고딕, 18px, 줄간격 150%
+- DeepSeek 1순위, GPT-4.1-mini 폴백 유지
+
+### Vercel 빌드 관련
+- LLM 클라이언트는 반드시 lazy 초기화 (getOpenAI/getDeepSeek 패턴)
+- top-level에서 process.env 접근 시 빌드 타임 에러 발생
+- NEXTAUTH_URL 환경변수 Vercel에 반드시 설정 필요

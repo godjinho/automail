@@ -312,7 +312,6 @@ export default function MailCopilot() {
 
   // --- AI Draft ---
   async function requestAiDraft() {
-    if (!aiInstruction.trim()) return;
     setAiDrafting(true);
     try {
       let context = "";
@@ -321,11 +320,14 @@ export default function MailCopilot() {
           .map((m) => `보낸사람: ${m.from}\n날짜: ${m.date}\n\n${m.body}`)
           .join("\n\n---\n\n");
       }
+      const instruction = aiInstruction.trim() || (editorMode === "reply"
+        ? "메일 내용을 참고하여 적절한 답장을 작성해줘"
+        : "적절한 비즈니스 메일을 작성해줘");
       const res = await fetch("/api/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          instruction: aiInstruction,
+          instruction,
           context: context || undefined,
           type: editorMode === "reply" ? "reply" : "compose",
         }),
@@ -641,12 +643,12 @@ export default function MailCopilot() {
                         onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); requestAiDraft(); } }}
                         placeholder="예: 미팅 일정 확인 요청, 정중하게 거절, 견적서 요청 등..."
                         className="flex-1 bg-gray-900 border border-purple-700/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 transition placeholder:text-gray-600" />
-                      <button onClick={requestAiDraft} disabled={aiDrafting || !aiInstruction.trim()}
+                      <button onClick={requestAiDraft} disabled={aiDrafting}
                         className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer shrink-0">
                         {aiDrafting ? "작성 중..." : "작성"}
                       </button>
                     </div>
-                    <p className="text-[11px] text-gray-500 mt-2">기본 톤: 공손/격식체 | 서명: 유진호 올림 | 푸터 자동 포함</p>
+                    <p className="text-[11px] text-gray-500 mt-2">비워두면 자동 작성 | 요청사항 입력 시 반영 | 서명·푸터 자동 포함</p>
                   </div>
                 )}
 
