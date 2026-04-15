@@ -47,8 +47,10 @@ export async function POST(request: NextRequest) {
 
   const refChain = [references, messageId].filter(Boolean).join(" ");
 
+  const encodedName = `=?UTF-8?B?${Buffer.from("유진호").toString("base64")}?=`;
+
   const headers = [
-    `From: 유진호 <${session.user?.email || "me"}>`,
+    `From: ${encodedName} <${session.user?.email || "me"}>`,
     `To: ${to}`,
     `Subject: =?UTF-8?B?${Buffer.from(replySubject || "").toString("base64")}?=`,
     `MIME-Version: 1.0`,
