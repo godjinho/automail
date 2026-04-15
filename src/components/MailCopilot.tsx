@@ -2,6 +2,9 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Attachment, fileToAttachment, validateAttachments, formatFileSize, sendMailDirect,
+} from "@/lib/mail-client";
 
 // --- Email Tag Input Component ---
 function EmailTagInput({
@@ -221,6 +224,7 @@ export default function MailCopilot() {
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [replyAll, setReplyAll] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   // AI draft
   const [aiInstruction, setAiInstruction] = useState("");
@@ -241,6 +245,7 @@ export default function MailCopilot() {
 
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -390,6 +395,7 @@ export default function MailCopilot() {
     setEditorMode("reply");
     setShowAiPanel(false);
     setShowReplyChoice(false);
+    setAttachments([]);
 
     if (useAi) {
       setEditorBody("");
@@ -430,6 +436,7 @@ export default function MailCopilot() {
     setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
     setEditorMode("compose");
     setShowAiPanel(false);
+    setAttachments([]);
     setTimeout(() => {
       const toInput = document.getElementById("editor-to");
       toInput?.focus();
@@ -526,40 +533,87 @@ export default function MailCopilot() {
     showToast(`${new Date(scheduleDate).toLocaleString("ko-KR")}에 전송 예약됨`, "success");
   }
 
+  // --- File Attachments ---
+  async function handleFileSelect(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const newAttachments: Attachment[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const att = await fileToAttachment(file);
+        newAttachments.push(att);
+      } catch {
+        showToast(`파일 읽기 실패: ${file.name}`, "error");
+      }
+    }
+    const merged = [...attachments, ...newAttachments];
+    const err = validateAttachments(merged);
+    if (err) {
+      showToast(err, "error");
+      return;
+    }
+    setAttachments(merged);
+  }
+
+  function removeAttachment(idx: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function handleEditorDrop(e: React.DragEvent) {
+    e.preventDefault();
+    handleFileSelect(e.dataTransfer.files);
+  }
+
   // --- Send ---
   async function handleSend() {
     if (editorTo.length === 0 || !editorBody.trim()) return;
     setSending(true);
     try {
-      const payload: any = {
-        to: editorTo.join(", "),
-        subject: editorSubject,
-        body: editorBody,
-      };
-      if (editorCc.length > 0) payload.cc = editorCc.join(", ");
-      if (editorBcc.length > 0) payload.bcc = editorBcc.join(", ");
-      if (editorMode === "reply" && threadDetail) {
-        const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
-        payload.threadId = threadDetail.id;
-        payload.messageId = lastMsg.messageId;
-        payload.references = lastMsg.references;
-      }
-      const res = await fetch("/api/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다", "success");
-        setShowConfirm(false);
-        setEditorMode(null);
+      if (attachments.length > 0) {
+        const params: any = {
+          accessToken: session!.accessToken,
+          to: editorTo.join(", "),
+          subject: editorSubject,
+          body: editorBody,
+          htmlBody: "",
+          attachments,
+        };
+        if (editorCc.length > 0) params.cc = editorCc.join(", ");
+        if (editorBcc.length > 0) params.bcc = editorBcc.join(", ");
+        if (editorMode === "reply" && threadDetail) {
+          const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
+          params.threadId = threadDetail.id;
+          params.messageId = lastMsg.messageId;
+          params.references = lastMsg.references;
+        }
+        await sendMailDirect(params);
       } else {
-        showToast("전송 실패: " + data.error, "error");
-        setShowConfirm(false);
+        const payload: any = {
+          to: editorTo.join(", "),
+          subject: editorSubject,
+          body: editorBody,
+        };
+        if (editorCc.length > 0) payload.cc = editorCc.join(", ");
+        if (editorBcc.length > 0) payload.bcc = editorBcc.join(", ");
+        if (editorMode === "reply" && threadDetail) {
+          const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
+          payload.threadId = threadDetail.id;
+          payload.messageId = lastMsg.messageId;
+          payload.references = lastMsg.references;
+        }
+        const res = await fetch("/api/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
       }
-    } catch {
-      showToast("전송 중 오류가 발생했습니다", "error");
+      showToast(editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다", "success");
+      setShowConfirm(false);
+      setEditorMode(null);
+      setAttachments([]);
+    } catch (err: any) {
+      showToast("전송 실패: " + (err.message || "오류 발생"), "error");
       setShowConfirm(false);
     } finally {
       setSending(false);
@@ -658,6 +712,9 @@ export default function MailCopilot() {
               {editorCc.length > 0 && <p>참조(CC): <span className="text-gray-200">{editorCc.join(", ")}</span></p>}
               {editorBcc.length > 0 && <p>비밀참조(BCC): <span className="text-gray-200">{editorBcc.join(", ")}</span></p>}
               {editorSubject && <p>제목: <span className="text-gray-200">{editorSubject}</span></p>}
+              {attachments.length > 0 && (
+                <p>첨부파일: <span className="text-gray-200">{attachments.length}개 ({formatFileSize(attachments.reduce((s, a) => s + a.size, 0))})</span></p>
+              )}
             </div>
             <div className="bg-gray-950 rounded-lg p-3 max-h-40 overflow-y-auto">
               <p className="text-sm text-gray-300 whitespace-pre-wrap">{editorBody.slice(0, 500)}{editorBody.length > 500 ? "..." : ""}</p>
@@ -898,7 +955,9 @@ export default function MailCopilot() {
                 </div>
 
                 {/* Body */}
-                <div className="mt-2 relative">
+                <div className="mt-2 relative"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleEditorDrop}>
                   {aiDrafting && (
                     <div className="absolute inset-0 bg-gray-900/80 rounded-xl flex items-center justify-center z-10">
                       <div className="text-center">
@@ -912,6 +971,37 @@ export default function MailCopilot() {
                     rows={16}
                     style={{ fontFamily: "'맑은 고딕', 'Malgun Gothic', sans-serif", fontSize: "18px", lineHeight: "150%" }}
                     className="w-full bg-gray-900 border border-gray-700 rounded-xl p-5 text-gray-200 resize-y min-h-[300px] focus:outline-none focus:border-blue-500/60 transition" />
+                </div>
+
+                {/* Attachments */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input ref={fileInputRef} type="file" multiple
+                      onChange={(e) => handleFileSelect(e.target.files)}
+                      className="hidden" />
+                    <button onClick={() => fileInputRef.current?.click()}
+                      className="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                      <span>&#128206;</span> 파일 첨부
+                    </button>
+                    <span className="text-[11px] text-gray-600">
+                      드래그 앤 드롭 가능 · 최대 25MB
+                      {attachments.length > 0 && (
+                        <> · 총 {formatFileSize(attachments.reduce((s, a) => s + a.size, 0))}</>
+                      )}
+                    </span>
+                  </div>
+                  {attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {attachments.map((att, i) => (
+                        <div key={i} className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs">
+                          <span className="text-gray-300 truncate max-w-[160px]">{att.name}</span>
+                          <span className="text-gray-500">{formatFileSize(att.size)}</span>
+                          <button onClick={() => removeAttachment(i)}
+                            className="text-gray-500 hover:text-red-400 transition cursor-pointer">&times;</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer preview */}
