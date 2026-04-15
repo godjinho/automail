@@ -74,3 +74,25 @@
 - LLM 클라이언트는 반드시 lazy 초기화 (getOpenAI/getDeepSeek 패턴)
 - top-level에서 process.env 접근 시 빌드 타임 에러 발생
 - NEXTAUTH_URL 환경변수 Vercel에 반드시 설정 필요
+
+### 클라이언트 측 메일 전송 (첨부파일)
+- Vercel 서버리스 함수 payload 제한 → 첨부파일 포함 시 클라이언트에서 직접 Gmail API 호출
+- sendMailDirect: src/lib/mail-client.ts, multipart/mixed MIME 구성
+- Gmail 25MB 첨부제한 활용, fileToAttachment로 base64 변환
+
+### From 헤더 MIME 인코딩
+- 한글 이름("유진호")은 RFC 2047 Base64 MIME 인코딩 필수
+- `=?UTF-8?B?{base64}?=` 형식으로 인코딩해야 이메일 클라이언트에서 정상 표시
+
+### LLM 프롬프트 파싱 (새 메일 작성)
+- JSON 형식은 본문 내 개행 문자로 인해 파싱 실패 빈번
+- 해결: `===SUBJECT===` / `===BODY===` 구분자 방식으로 변경
+- JSON 폴백도 유지하되, 개행 이스케이프 처리 필요
+
+### 자동 주소록 (2026-04-16)
+- localStorage 기반, key: "automail_contacts"
+- Contact: { email, name, vip, count, lastUsed }
+- 메일 전송 시 saveRecipientsFromSend()로 자동 저장
+- EmailTagInput에 자동완성 드롭다운 (searchContacts → 화살표/Enter 선택)
+- VIP 토글 → VIP 탭에서 from:(vip1 OR vip2...) Gmail 검색으로 필터링
+- 주소록 관리 모달: 사이드바 "주소록 관리" 버튼 → 목록/VIP 토글/삭제

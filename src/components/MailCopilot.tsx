@@ -329,6 +329,8 @@ export default function MailCopilot() {
 
   // Schedule
   const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [scheduleTimer, setScheduleTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [scheduleRemaining, setScheduleRemaining] = useState<string | null>(null);
 
@@ -616,8 +618,8 @@ export default function MailCopilot() {
   }
 
   function handleScheduleSend() {
-    if (!scheduleDate || editorTo.length === 0 || !editorBody.trim()) return;
-    const targetTime = new Date(scheduleDate).getTime();
+    if (!scheduleDate || !scheduleTime || editorTo.length === 0 || !editorBody.trim()) return;
+    const targetTime = new Date(`${scheduleDate}T${scheduleTime}`).getTime();
     const now = Date.now();
     const delay = targetTime - now;
     if (delay <= 0) {
@@ -625,6 +627,7 @@ export default function MailCopilot() {
       return;
     }
 
+    setShowSchedulePicker(false);
     setShowConfirm(false);
     const timer = setTimeout(() => {
       handleSend();
@@ -644,7 +647,8 @@ export default function MailCopilot() {
       }
     }, 1000);
 
-    showToast(`${new Date(scheduleDate).toLocaleString("ko-KR")}에 전송 예약됨`, "success");
+    const target = new Date(`${scheduleDate}T${scheduleTime}`);
+    showToast(`${target.toLocaleString("ko-KR")}에 전송 예약됨`, "success");
   }
 
   // --- File Attachments ---
@@ -1212,16 +1216,59 @@ export default function MailCopilot() {
                     </button>
 
                     {!scheduleRemaining && (
-                      <div className="flex items-center gap-2">
-                        <input type="datetime-local" value={scheduleDate}
-                          onChange={(e) => setScheduleDate(e.target.value)}
-                          min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-                          className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-amber-500 transition cursor-pointer" />
-                        <button onClick={handleScheduleSend}
-                          disabled={!scheduleDate || editorTo.length === 0 || !editorBody.trim() || aiDrafting}
-                          className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer whitespace-nowrap">
-                          예약 보내기
+                      <div className="relative">
+                        <button onClick={() => setShowSchedulePicker(!showSchedulePicker)}
+                          disabled={editorTo.length === 0 || !editorBody.trim() || aiDrafting}
+                          className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer whitespace-nowrap flex items-center gap-1.5">
+                          <span>&#128197;</span> 예약 보내기
                         </button>
+
+                        {showSchedulePicker && (
+                          <div className="absolute bottom-full mb-2 left-0 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl p-4 z-30 w-[280px]"
+                            onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-semibold text-gray-200">예약 발송 설정</h4>
+                              <button onClick={() => setShowSchedulePicker(false)}
+                                className="text-gray-500 hover:text-white transition cursor-pointer">&times;</button>
+                            </div>
+
+                            <label className="block text-xs text-gray-500 mb-1">날짜</label>
+                            <input type="date" value={scheduleDate}
+                              onChange={(e) => setScheduleDate(e.target.value)}
+                              min={new Date().toISOString().slice(0, 10)}
+                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-amber-500 transition cursor-pointer mb-3" />
+
+                            <label className="block text-xs text-gray-500 mb-1">시간</label>
+                            <input type="time" value={scheduleTime}
+                              onChange={(e) => setScheduleTime(e.target.value)}
+                              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-amber-500 transition cursor-pointer mb-3" />
+
+                            <div className="flex gap-2 text-xs text-gray-500 mb-3 flex-wrap">
+                              {[
+                                { label: "내일 오전 9시", fn: () => { const d = new Date(); d.setDate(d.getDate() + 1); setScheduleDate(d.toISOString().slice(0, 10)); setScheduleTime("09:00"); }},
+                                { label: "내일 오후 2시", fn: () => { const d = new Date(); d.setDate(d.getDate() + 1); setScheduleDate(d.toISOString().slice(0, 10)); setScheduleTime("14:00"); }},
+                                { label: "월요일 오전 9시", fn: () => { const d = new Date(); const day = d.getDay(); const diff = day === 0 ? 1 : day === 1 ? 7 : 8 - day; d.setDate(d.getDate() + diff); setScheduleDate(d.toISOString().slice(0, 10)); setScheduleTime("09:00"); }},
+                              ].map((preset) => (
+                                <button key={preset.label} onClick={preset.fn}
+                                  className="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-md px-2 py-1 transition cursor-pointer">
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+
+                            {scheduleDate && scheduleTime && (
+                              <p className="text-xs text-amber-400 mb-3">
+                                &#128197; {new Date(`${scheduleDate}T${scheduleTime}`).toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            )}
+
+                            <button onClick={handleScheduleSend}
+                              disabled={!scheduleDate || !scheduleTime || editorTo.length === 0 || !editorBody.trim()}
+                              className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed py-2.5 rounded-lg text-sm font-medium transition cursor-pointer">
+                              예약 확정
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
