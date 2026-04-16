@@ -1,6 +1,1 @@
-fix: Android 앱 OAuth 로그인 문제 해결
-
-- Google OAuth URL을 Chrome Custom Tabs로 열어서 disallowed_useragent 회피
-- WebView user-agent에서 "wv" 제거 (WebView 탐지 우회)
-- launchMode=singleTask + 딥링크로 인증 콜백을 앱으로 리턴
-- androidx.browser:browser 의존성 추가
+feat: 신규메일/회신 시 참조(CC)에 godjinho@naver.com 기본 포함

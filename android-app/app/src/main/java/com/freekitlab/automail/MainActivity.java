@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.webkit.CookieManager;
@@ -20,23 +21,29 @@ import android.widget.ProgressBar;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.browser.customtabs.CustomTabColorSchemeParams;
-import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "AutoMail";
     private static final String BASE_URL = "https://automail-a.vercel.app";
     private static final String APP_PARAM = "?app=android";
+
+    private static final String CHROME_UA =
+            "Mozilla/5.0 (Linux; Android 16; SM-S928N) "
+                    + "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    + "Chrome/131.0.6778.200 Mobile Safari/537.36";
 
     private WebView webView;
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefresh;
     private ValueCallback<Uri[]> fileCallback;
-    private boolean authInProgress = false;
 
     private final ActivityResultLauncher<Intent> filePicker =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -83,27 +90,7 @@ public class MainActivity extends AppCompatActivity {
         swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
         setupWebView();
-        handleIntent(getIntent());
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        handleIntent(intent);
-    }
-
-    private void handleIntent(Intent intent) {
-        Uri data = intent.getData();
-        if (data != null && data.toString().contains("/api/auth/callback")) {
-            authInProgress = false;
-            webView.loadUrl(data.toString());
-        } else if (!authInProgress) {
-            String currentUrl = webView.getUrl();
-            if (currentUrl == null || currentUrl.equals("about:blank")) {
-                webView.loadUrl(BASE_URL + APP_PARAM);
-            }
-        }
+        webView.loadUrl(BASE_URL + APP_PARAM);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -121,13 +108,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setLoadWithOverviewMode(true);
         settings.setSupportZoom(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setSupportMultipleWindows(false);
 
-        String ua = settings.getUserAgentString();
-        if (ua.contains("; wv)")) {
-            ua = ua.replace("; wv)", ")");
-        }
-        ua = ua + " AutoMailApp/1.0";
-        settings.setUserAgentString(ua);
+        settings.setUserAgentString(CHROME_UA);
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -137,13 +120,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
+                Log.d(TAG, "Loading: " + url);
 
-                if (isGoogleAuthUrl(url)) {
-                    openInCustomTab(url);
-                    return true;
-                }
-
-                if (url.startsWith(BASE_URL) || url.contains("vercel.app")) {
+                if (url.startsWith(BASE_URL) ||
+                        url.contains("accounts.google.com") ||
+                        url.contains("googleapis.com") ||
+                        url.contains("google.com/o/oauth2") ||
+                        url.contains("vercel.app") ||
+                        url.contains("/api/auth")) {
                     return false;
                 }
 
@@ -158,12 +142,14 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 swipeRefresh.setRefreshing(false);
                 injectAppStyles();
+                Log.d(TAG, "Page finished: " + url);
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
+                    Log.e(TAG, "Error: " + error.getDescription());
                     swipeRefresh.setRefreshing(false);
                 }
             }
@@ -196,29 +182,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    private boolean isGoogleAuthUrl(String url) {
-        return url.contains("accounts.google.com") ||
-                url.contains("/api/auth/signin") ||
-                (url.contains("/api/auth/callback") && url.contains("google"));
-    }
-
-    private void openInCustomTab(String url) {
-        authInProgress = true;
-        CustomTabColorSchemeParams colorParams = new CustomTabColorSchemeParams.Builder()
-                .setToolbarColor(0xFF0a0a0a)
-                .setNavigationBarColor(0xFF0a0a0a)
-                .build();
-
-        CustomTabsIntent customTab = new CustomTabsIntent.Builder()
-                .setDefaultColorSchemeParams(colorParams)
-                .setColorScheme(CustomTabsIntent.COLOR_SCHEME_DARK)
-                .setShowTitle(true)
-                .setUrlBarHidingEnabled(true)
-                .build();
-
-        customTab.launchUrl(this, Uri.parse(url));
     }
 
     private void injectAppStyles() {

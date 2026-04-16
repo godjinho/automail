@@ -246,6 +246,7 @@ const URGENCY_STYLES: Record<string, { bg: string; text: string; label: string }
 
 const DEFAULT_GREETING = "안녕하세요, 유진호 입니다.\n\n";
 const DEFAULT_CLOSING = "\n\n유진호 올림";
+const DEFAULT_CC = ["godjinho@naver.com"];
 
 function formatDate(dateStr: string): string {
   try {
@@ -508,12 +509,12 @@ export default function MailCopilot() {
     if (all) {
       const allTo = lastMsg.to?.split(",").map((e) => extractEmail(e.trim())) || [];
       const allCc = lastMsg.cc?.split(",").map((e) => extractEmail(e.trim())) || [];
-      const ccList = [...allTo, ...allCc]
+      const ccList = [...allTo, ...allCc, ...DEFAULT_CC]
         .filter((e) => e && e !== myEmail && e !== to)
         .filter((e, i, arr) => arr.indexOf(e) === i);
       setEditorCc(ccList);
     } else {
-      setEditorCc([]);
+      setEditorCc([...DEFAULT_CC]);
     }
     setEditorBcc([]);
     setEditorSubject(threadDetail.subject.startsWith("Re:") ? threadDetail.subject : `Re: ${threadDetail.subject}`);
@@ -556,7 +557,7 @@ export default function MailCopilot() {
   // --- Open Compose ---
   function openCompose() {
     setEditorTo([]);
-    setEditorCc([]);
+    setEditorCc([...DEFAULT_CC]);
     setEditorBcc([]);
     setEditorSubject("");
     setEditorBody(DEFAULT_GREETING + "\n" + DEFAULT_CLOSING);
