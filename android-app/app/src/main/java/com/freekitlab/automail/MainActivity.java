@@ -81,6 +81,17 @@ public class MainActivity extends AppCompatActivity {
 
         setupWebView();
         webView.loadUrl(BASE_URL + APP_PARAM);
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    moveTaskToBack(true);
+                }
+            }
+        });
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -192,13 +203,4 @@ public class MainActivity extends AppCompatActivity {
         webView.evaluateJavascript(js, null);
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
 }

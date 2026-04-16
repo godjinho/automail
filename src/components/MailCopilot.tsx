@@ -357,6 +357,28 @@ export default function MailCopilot() {
     setVipSet(new Set(getVipEmails()));
   }, [showContacts]);
 
+  // App mode: manage browser history for Android back button
+  useEffect(() => {
+    if (!isApp) return;
+    const onPopState = () => {
+      if (showConfirm) { setShowConfirm(false); return; }
+      if (editorMode) { setEditorMode(null); return; }
+      if (showContacts) { setShowContacts(false); return; }
+      if (threadDetail) { setThreadDetail(null); setAnalysis(null); setSelectedIndex(-1); return; }
+      if (sidebarOpen) { setSidebarOpen(false); return; }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [isApp, showConfirm, editorMode, showContacts, threadDetail, sidebarOpen]);
+
+  useEffect(() => {
+    if (!isApp) return;
+    const hasOverlay = !!(threadDetail || editorMode || showContacts || sidebarOpen || showConfirm);
+    if (hasOverlay) {
+      window.history.pushState({ overlay: true }, "");
+    }
+  }, [isApp, threadDetail, editorMode, showContacts, sidebarOpen, showConfirm]);
+
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
