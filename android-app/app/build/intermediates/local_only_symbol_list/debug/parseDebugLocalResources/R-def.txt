@@ -5,7 +5,6 @@ drawable ic_launcher_foreground
 drawable progress_bar
 id main_container
 id progress_bar
-id swipe_refresh
 id webview
 layout activity_main
 mipmap ic_launcher

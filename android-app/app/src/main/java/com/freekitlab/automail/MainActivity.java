@@ -24,10 +24,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
     private ProgressBar progressBar;
-    private SwipeRefreshLayout swipeRefresh;
     private ValueCallback<Uri[]> fileCallback;
 
     private final ActivityResultLauncher<Intent> filePicker =
@@ -82,12 +77,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         progressBar = findViewById(R.id.progress_bar);
-        swipeRefresh = findViewById(R.id.swipe_refresh);
         webView = findViewById(R.id.webview);
-
-        swipeRefresh.setColorSchemeColors(0xFF3B82F6);
-        swipeRefresh.setProgressBackgroundColorSchemeColor(0xFF1a1a2e);
-        swipeRefresh.setOnRefreshListener(() -> webView.reload());
 
         setupWebView();
         webView.loadUrl(BASE_URL + APP_PARAM);
@@ -111,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportMultipleWindows(false);
 
         settings.setUserAgentString(CHROME_UA);
+
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -140,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                swipeRefresh.setRefreshing(false);
                 injectAppStyles();
                 Log.d(TAG, "Page finished: " + url);
             }
@@ -150,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Log.e(TAG, "Error: " + error.getDescription());
-                    swipeRefresh.setRefreshing(false);
                 }
             }
         });

@@ -977,12 +977,21 @@ export default function MailCopilot() {
               <button key={item.key} onClick={() => handleLabelChange(item.key)}
                 className={`flex-1 text-xs py-1.5 rounded-lg transition cursor-pointer ${
                   label === item.key && !searchQuery ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                }`}>
+                }`} title={item.label}>
                 <span dangerouslySetInnerHTML={{ __html: item.icon }}
-                  className={`mr-1 ${item.key === "VIP" ? "text-amber-400" : ""}`} />
-                {item.label}
+                  className={`${item.key === "VIP" ? "text-amber-400" : ""}`} />
+                {!isApp && <span className="ml-1">{item.label}</span>}
               </button>
             ))}
+            {isApp && (
+              <button onClick={() => fetchThreads()}
+                disabled={loading}
+                className={`flex-1 text-xs py-1.5 rounded-lg transition cursor-pointer ${
+                  loading ? "bg-gray-800 text-gray-600" : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`} title="새로고침">
+                <span className={loading ? "inline-block animate-spin" : ""}>&#8635;</span>
+              </button>
+            )}
           </div>
 
           {/* Search */}
