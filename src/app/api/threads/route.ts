@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { listThreads, MailLabel } from "@/lib/gmail";
+import { mirrorThreads } from "@/lib/mail-mirror";
 
 const VALID_LABELS: MailLabel[] = ["INBOX", "SENT", "STARRED", "IMPORTANT", "DRAFT"];
 
@@ -24,6 +25,18 @@ export async function GET(request: NextRequest) {
       label: label && VALID_LABELS.includes(label) ? label : "INBOX",
       query,
     });
+
+    // 업무비서(freeis-copilot) 브릿지: INBOX 조회 시 Firestore로 mirror.
+    // fire-and-forget — 응답을 절대 지연시키지 않는다.
+    if (
+      (label ?? "INBOX") === "INBOX" &&
+      !query &&
+      !pageToken &&
+      session.user?.email
+    ) {
+      void mirrorThreads(session.user.email, result.threads);
+    }
+
     return NextResponse.json(result);
   } catch (error: any) {
     const status = error?.code || error?.status || 500;
