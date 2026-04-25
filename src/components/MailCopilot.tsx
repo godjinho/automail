@@ -663,7 +663,6 @@ export default function MailCopilot() {
 
   function openBulkCompose() {
     openCompose();
-    setSendIndividually(true);
     setTimeout(() => bulkRecipientInputRef.current?.click(), 150);
   }
 
@@ -808,12 +807,11 @@ export default function MailCopilot() {
       const limited = extracted.slice(0, MAX_TO_RECIPIENTS);
       setEditorTo(limited);
       setEditorCc((prev) => withDefaultCc(prev));
-      setSendIndividually(true);
 
       if (extracted.length > MAX_TO_RECIPIENTS) {
         showToast(`${limited.length}명만 불러왔습니다. 초과 ${extracted.length - limited.length}명은 제외했습니다`, "error");
       } else {
-        showToast(`${limited.length}명을 불러오고 개인별 발송을 켰습니다`, "success");
+        showToast(`${limited.length}명을 불러왔습니다. 개인별 발송은 체크 시에만 적용됩니다`, "success");
       }
     } catch (error) {
       console.error("Bulk recipient import error:", error);
@@ -1038,7 +1036,7 @@ export default function MailCopilot() {
                 className="bg-emerald-700 hover:bg-emerald-600 rounded-xl p-5 text-left transition cursor-pointer">
                 <span className="block text-2xl mb-2">&#128196;</span>
                 <span className="block font-semibold mb-1">엑셀업로드</span>
-                <span className="block text-xs text-emerald-100/80">엑셀에서 이메일만 추출하고 개인별 발송을 켭니다.</span>
+                <span className="block text-xs text-emerald-100/80">엑셀에서 이메일만 추출합니다. 개인별 발송은 별도 체크가 필요합니다.</span>
               </button>
             </div>
             <button onClick={() => setShowComposeChoice(false)}
@@ -1372,7 +1370,7 @@ export default function MailCopilot() {
                       <span>&#128196;</span> 엑셀에서 수신처 불러오기
                     </button>
                     <span className="text-[11px] text-gray-600">
-                      이메일만 자동 추출 · 중복 제거 · 최대 {MAX_TO_RECIPIENTS}명 · 개인별 발송 자동 체크
+                      이메일만 자동 추출 · 중복 제거 · 최대 {MAX_TO_RECIPIENTS}명 · 개인별 발송은 별도 체크
                     </span>
                   </div>
                 </div>
@@ -1390,7 +1388,11 @@ export default function MailCopilot() {
                 </div>
 
                 {/* Individual send */}
-                <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900/50 px-3 py-2 text-sm text-gray-300 cursor-pointer">
+                <label className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm cursor-pointer transition ${
+                  sendIndividually
+                    ? "border-blue-500/50 bg-blue-600/15 text-blue-100"
+                    : "border-gray-800 bg-gray-900/50 text-gray-300"
+                }`}>
                   <input
                     type="checkbox"
                     checked={sendIndividually}
@@ -1398,9 +1400,9 @@ export default function MailCopilot() {
                     className="mt-1 accent-blue-600"
                   />
                   <span>
-                    <span className="font-medium text-gray-200">개인별로 보내기</span>
-                    <span className="block text-xs text-gray-500 mt-0.5">
-                      받는사람(To)이 여러 명이면 각 수신자에게 1명씩 따로 발송합니다.
+                    <span className="font-medium text-gray-200">개인별로 보내기 체크</span>
+                    <span className={`block text-xs mt-0.5 ${sendIndividually ? "text-blue-200/80" : "text-gray-500"}`}>
+                      체크했을 때만 받는사람(To)을 1명씩 나누어 보냅니다. 체크하지 않으면 한 메일에 함께 보냅니다.
                     </span>
                   </span>
                 </label>

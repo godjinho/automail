@@ -58,7 +58,8 @@ src/
 - 첨부파일 없음: `/api/send`에서 `sendIndividually` 옵션 처리
 - 첨부파일 있음: `src/lib/mail-client.ts`의 직접 Gmail API 발송을 `MailCopilot`에서 수신자별 반복 호출
 - 대량메일: "엑셀에서 수신처 불러오기"로 `.xlsx/.xls/.csv`에서 이메일만 추출, 중복 제거, 최대 100명까지 To에 입력
-- 대량메일 import 성공 시 개인별 발송 자동 체크
+- 엑셀 업로드 후에도 개인별 발송은 자동 체크하지 않음
+- 개인별 발송은 사용자가 "개인별로 보내기 체크"를 직접 켠 경우에만 적용
 - "새 메일 작성" 클릭 시 "신규작성/엑셀업로드" 선택 모달 표시
 - 업로드한 엑셀은 저장하지 않고 수신처 추출에만 사용
 - 기본 참조는 항상 `godjinho@naver.com`, `zin.yoo@lge.com`, `lgfreekit@daum.net` 3명 포함
