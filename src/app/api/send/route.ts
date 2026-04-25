@@ -28,18 +28,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
   }
 
-  const { threadId, to, cc, bcc, subject, body, messageId, references } = await request.json();
+  const { threadId, to, cc, bcc, subject, body, messageId, references, sendIndividually } = await request.json();
 
   if (!to || !body) {
+    return NextResponse.json({ error: "받는 사람과 내용은 필수입니다" }, { status: 400 });
+  }
+
+  const toRecipients = String(to)
+    .split(",")
+    .map((recipient) => recipient.trim())
+    .filter(Boolean);
+
+  if (toRecipients.length === 0) {
     return NextResponse.json({ error: "받는 사람과 내용은 필수입니다" }, { status: 400 });
   }
 
   const auth = new google.auth.OAuth2();
   auth.setCredentials({ access_token: session.accessToken });
   const gmail = google.gmail({ version: "v1", auth });
-
-  const htmlBody = textToHtml(body);
-  const boundary = "boundary_automail_" + Date.now();
 
   const replySubject = threadId
     ? (subject?.startsWith("Re:") ? subject : `Re: ${subject}`)
@@ -48,53 +54,64 @@ export async function POST(request: NextRequest) {
   const refChain = [references, messageId].filter(Boolean).join(" ");
 
   const encodedName = `=?UTF-8?B?${Buffer.from("유진호").toString("base64")}?=`;
+  const fromEmail = session.user?.email || "me";
 
-  const headers = [
-    `From: ${encodedName} <${session.user?.email || "me"}>`,
-    `To: ${to}`,
-    `Subject: =?UTF-8?B?${Buffer.from(replySubject || "").toString("base64")}?=`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-  ];
+  function buildEncodedMessage(targetTo: string, index: number): string {
+    const htmlBody = textToHtml(body);
+    const boundary = `boundary_automail_${Date.now()}_${index}`;
+    const headers = [
+      `From: ${encodedName} <${fromEmail}>`,
+      `To: ${targetTo}`,
+      `Subject: =?UTF-8?B?${Buffer.from(replySubject || "").toString("base64")}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    ];
 
-  if (cc) headers.push(`Cc: ${cc}`);
-  if (bcc) headers.push(`Bcc: ${bcc}`);
-  if (messageId) headers.push(`In-Reply-To: ${messageId}`);
-  if (refChain) headers.push(`References: ${refChain}`);
+    if (cc) headers.push(`Cc: ${cc}`);
+    if (bcc) headers.push(`Bcc: ${bcc}`);
+    if (messageId) headers.push(`In-Reply-To: ${messageId}`);
+    if (refChain) headers.push(`References: ${refChain}`);
 
-  const rawMessage = [
-    ...headers,
-    "",
-    `--${boundary}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    "",
-    body + "\n\n---\n유진호\nfreekitlab.com | Tel. 010-7207-5808",
-    "",
-    `--${boundary}`,
-    `Content-Type: text/html; charset="UTF-8"`,
-    "",
-    htmlBody,
-    "",
-    `--${boundary}--`,
-  ].join("\r\n");
+    const rawMessage = [
+      ...headers,
+      "",
+      `--${boundary}`,
+      `Content-Type: text/plain; charset="UTF-8"`,
+      "",
+      body + "\n\n---\n유진호\nfreekitlab.com | Tel. 010-7207-5808",
+      "",
+      `--${boundary}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      "",
+      htmlBody,
+      "",
+      `--${boundary}--`,
+    ].join("\r\n");
 
-  const encodedMessage = Buffer.from(rawMessage)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+    return Buffer.from(rawMessage)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+  }
 
   try {
-    await gmail.users.messages.send({
-      userId: "me",
-      requestBody: {
-        raw: encodedMessage,
-        ...(threadId && { threadId }),
-      },
-    });
-    return NextResponse.json({ success: true });
-  } catch (error: any) {
+    const targets = sendIndividually ? toRecipients : [String(to)];
+
+    for (const [index, targetTo] of targets.entries()) {
+      await gmail.users.messages.send({
+        userId: "me",
+        requestBody: {
+          raw: buildEncodedMessage(targetTo, index),
+          ...(threadId && { threadId }),
+        },
+      });
+    }
+
+    return NextResponse.json({ success: true, sentCount: targets.length });
+  } catch (error: unknown) {
     console.error("Send error:", error);
-    return NextResponse.json({ error: error.message || "전송 실패" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "전송 실패";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

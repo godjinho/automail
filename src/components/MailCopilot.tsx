@@ -2,6 +2,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
+import * as XLSX from "xlsx";
 import {
   Attachment, fileToAttachment, validateAttachments, formatFileSize, sendMailDirect,
 } from "@/lib/mail-client";
@@ -246,7 +247,55 @@ const URGENCY_STYLES: Record<string, { bg: string; text: string; label: string }
 
 const DEFAULT_GREETING = "안녕하세요, 유진호 입니다.\n\n";
 const DEFAULT_CLOSING = "\n\n유진호 올림";
-const DEFAULT_CC = ["godjinho@naver.com"];
+const DEFAULT_CC = ["godjinho@naver.com", "zin.yoo@lge.com", "lgfreekit@daum.net"];
+const MAX_TO_RECIPIENTS = 100;
+const EMAIL_PATTERN = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+
+function mergeUniqueEmails(emails: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const email of emails) {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    unique.push(normalized);
+  }
+
+  return unique;
+}
+
+function extractEmailsFromText(value: string): string[] {
+  const matches = value.match(EMAIL_PATTERN) || [];
+  return mergeUniqueEmails(matches);
+}
+
+async function extractEmailsFromSpreadsheet(file: File): Promise<string[]> {
+  const buffer = await file.arrayBuffer();
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const found: string[] = [];
+
+  for (const sheetName of workbook.SheetNames) {
+    const worksheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
+      header: 1,
+      raw: false,
+      defval: "",
+    });
+
+    for (const row of rows) {
+      for (const cell of row) {
+        found.push(...extractEmailsFromText(String(cell)));
+      }
+    }
+  }
+
+  return mergeUniqueEmails(found);
+}
+
+function withDefaultCc(cc: string[]): string[] {
+  return mergeUniqueEmails([...cc, ...DEFAULT_CC]);
+}
 
 function formatDate(dateStr: string): string {
   try {
@@ -326,6 +375,8 @@ export default function MailCopilot() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [replyAll, setReplyAll] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [sendIndividually, setSendIndividually] = useState(false);
+  const [bulkImporting, setBulkImporting] = useState(false);
 
   // AI draft
   const [aiInstruction, setAiInstruction] = useState("");
@@ -345,6 +396,7 @@ export default function MailCopilot() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showComposeChoice, setShowComposeChoice] = useState(false);
 
   useEffect(() => {
     if (!isApp && window.innerWidth >= 768) setSidebarOpen(true);
@@ -362,6 +414,7 @@ export default function MailCopilot() {
     if (!isApp) return;
     const onPopState = () => {
       if (showConfirm) { setShowConfirm(false); return; }
+      if (showComposeChoice) { setShowComposeChoice(false); return; }
       if (editorMode) { setEditorMode(null); return; }
       if (showContacts) { setShowContacts(false); return; }
       if (threadDetail) { setThreadDetail(null); setAnalysis(null); setSelectedIndex(-1); return; }
@@ -369,24 +422,36 @@ export default function MailCopilot() {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [isApp, showConfirm, editorMode, showContacts, threadDetail, sidebarOpen]);
+  }, [isApp, showConfirm, showComposeChoice, editorMode, showContacts, threadDetail, sidebarOpen]);
 
   useEffect(() => {
     if (!isApp) return;
-    const hasOverlay = !!(threadDetail || editorMode || showContacts || sidebarOpen || showConfirm);
+    const hasOverlay = !!(threadDetail || editorMode || showContacts || sidebarOpen || showConfirm || showComposeChoice);
     if (hasOverlay) {
       window.history.pushState({ overlay: true }, "");
     }
-  }, [isApp, threadDetail, editorMode, showContacts, sidebarOpen, showConfirm]);
+  }, [isApp, threadDetail, editorMode, showContacts, sidebarOpen, showConfirm, showComposeChoice]);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bulkRecipientInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  const updateEditorTo = useCallback((emails: string[]) => {
+    const unique = mergeUniqueEmails(emails);
+    const limited = unique.slice(0, MAX_TO_RECIPIENTS);
+
+    if (unique.length > MAX_TO_RECIPIENTS) {
+      showToast(`수신처는 최대 ${MAX_TO_RECIPIENTS}명까지 입력할 수 있습니다`, "error");
+    }
+
+    setEditorTo(limited);
+  }, [showToast]);
 
   useEffect(() => {
     if (session?.accessToken) fetchThreads();
@@ -418,6 +483,7 @@ export default function MailCopilot() {
       }
       if (e.key === "Escape") {
         if (showConfirm) { setShowConfirm(false); return; }
+        if (showComposeChoice) { setShowComposeChoice(false); return; }
         if (editorMode) { setEditorMode(null); return; }
         setThreadDetail(null);
         setAnalysis(null);
@@ -430,7 +496,7 @@ export default function MailCopilot() {
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [threads, threadDetail, editorMode, showConfirm]);
+  }, [threads, threadDetail, editorMode, showConfirm, showComposeChoice]);
 
   // --- Fetch threads ---
   async function fetchThreads(query?: string, append = false) {
@@ -545,6 +611,7 @@ export default function MailCopilot() {
     setShowAiPanel(false);
     setShowReplyChoice(false);
     setAttachments([]);
+    setSendIndividually(false);
 
     if (useAi) {
       setEditorBody("");
@@ -578,6 +645,7 @@ export default function MailCopilot() {
 
   // --- Open Compose ---
   function openCompose() {
+    setShowComposeChoice(false);
     setEditorTo([]);
     setEditorCc([...DEFAULT_CC]);
     setEditorBcc([]);
@@ -586,10 +654,17 @@ export default function MailCopilot() {
     setEditorMode("compose");
     setShowAiPanel(false);
     setAttachments([]);
+    setSendIndividually(false);
     setTimeout(() => {
       const toInput = document.getElementById("editor-to");
       toInput?.focus();
     }, 100);
+  }
+
+  function openBulkCompose() {
+    openCompose();
+    setSendIndividually(true);
+    setTimeout(() => bulkRecipientInputRef.current?.click(), 150);
   }
 
   // --- AI Draft ---
@@ -719,36 +794,100 @@ export default function MailCopilot() {
     handleFileSelect(e.dataTransfer.files);
   }
 
+  async function handleBulkRecipientFile(file: File | null) {
+    if (!file) return;
+
+    setBulkImporting(true);
+    try {
+      const extracted = await extractEmailsFromSpreadsheet(file);
+      if (extracted.length === 0) {
+        showToast("엑셀 파일에서 이메일 주소를 찾지 못했습니다", "error");
+        return;
+      }
+
+      const limited = extracted.slice(0, MAX_TO_RECIPIENTS);
+      setEditorTo(limited);
+      setEditorCc((prev) => withDefaultCc(prev));
+      setSendIndividually(true);
+
+      if (extracted.length > MAX_TO_RECIPIENTS) {
+        showToast(`${limited.length}명만 불러왔습니다. 초과 ${extracted.length - limited.length}명은 제외했습니다`, "error");
+      } else {
+        showToast(`${limited.length}명을 불러오고 개인별 발송을 켰습니다`, "success");
+      }
+    } catch (error) {
+      console.error("Bulk recipient import error:", error);
+      showToast("엑셀 파일을 읽지 못했습니다", "error");
+    } finally {
+      setBulkImporting(false);
+      if (bulkRecipientInputRef.current) bulkRecipientInputRef.current.value = "";
+    }
+  }
+
   // --- Send ---
   async function handleSend() {
     if (editorTo.length === 0 || !editorBody.trim()) return;
+    const normalizedTo = mergeUniqueEmails(editorTo);
+    if (normalizedTo.length > MAX_TO_RECIPIENTS) {
+      showToast(`수신처는 최대 ${MAX_TO_RECIPIENTS}명까지 입력할 수 있습니다`, "error");
+      return;
+    }
+    if (normalizedTo.join(",") !== editorTo.join(",")) {
+      setEditorTo(normalizedTo);
+    }
+    if (!session?.accessToken) {
+      showToast("인증이 필요합니다. 다시 로그인해주세요.", "error");
+      return;
+    }
     setSending(true);
     try {
+      const ccRecipients = withDefaultCc(editorCc);
+      if (ccRecipients.join(",") !== editorCc.join(",")) {
+        setEditorCc(ccRecipients);
+      }
+      const targetRecipients = sendIndividually
+        ? normalizedTo
+        : [normalizedTo.join(", ")];
+      let sentCount = targetRecipients.length;
+
       if (attachments.length > 0) {
-        const params: any = {
-          accessToken: session!.accessToken,
-          to: editorTo.join(", "),
-          subject: editorSubject,
-          body: editorBody,
-          htmlBody: "",
-          attachments,
-        };
-        if (editorCc.length > 0) params.cc = editorCc.join(", ");
-        if (editorBcc.length > 0) params.bcc = editorBcc.join(", ");
-        if (editorMode === "reply" && threadDetail) {
-          const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
-          params.threadId = threadDetail.id;
-          params.messageId = lastMsg.messageId;
-          params.references = lastMsg.references;
+        for (const targetTo of targetRecipients) {
+          const params: Parameters<typeof sendMailDirect>[0] = {
+            accessToken: session.accessToken,
+            to: targetTo,
+            subject: editorSubject,
+            body: editorBody,
+            htmlBody: "",
+            attachments,
+          };
+          if (ccRecipients.length > 0) params.cc = ccRecipients.join(", ");
+          if (editorBcc.length > 0) params.bcc = editorBcc.join(", ");
+          if (editorMode === "reply" && threadDetail) {
+            const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
+            params.threadId = threadDetail.id;
+            params.messageId = lastMsg.messageId;
+            params.references = lastMsg.references;
+          }
+          await sendMailDirect(params);
         }
-        await sendMailDirect(params);
       } else {
-        const payload: any = {
-          to: editorTo.join(", "),
+        const payload: {
+          to: string;
+          subject: string;
+          body: string;
+          sendIndividually: boolean;
+          cc?: string;
+          bcc?: string;
+          threadId?: string;
+          messageId?: string;
+          references?: string;
+        } = {
+          to: normalizedTo.join(", "),
           subject: editorSubject,
           body: editorBody,
+          sendIndividually,
         };
-        if (editorCc.length > 0) payload.cc = editorCc.join(", ");
+        if (ccRecipients.length > 0) payload.cc = ccRecipients.join(", ");
         if (editorBcc.length > 0) payload.bcc = editorBcc.join(", ");
         if (editorMode === "reply" && threadDetail) {
           const lastMsg = threadDetail.messages[threadDetail.messages.length - 1];
@@ -763,13 +902,19 @@ export default function MailCopilot() {
         });
         const data = await res.json();
         if (!data.success) throw new Error(data.error);
+        sentCount = data.sentCount || sentCount;
       }
       saveRecipientsFromSend(
-        editorTo.join(","),
-        editorCc.join(","),
+        normalizedTo.join(","),
+        ccRecipients.join(","),
         editorBcc.join(","),
       );
-      showToast(editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다", "success");
+      showToast(
+        sendIndividually && sentCount > 1
+          ? `${sentCount}명에게 개인별로 전송되었습니다`
+          : editorMode === "reply" ? "답장이 전송되었습니다" : "메일이 전송되었습니다",
+        "success",
+      );
       setShowConfirm(false);
       setEditorMode(null);
       setAttachments([]);
@@ -868,6 +1013,42 @@ export default function MailCopilot() {
         }`}>{toast.message}</div>
       )}
 
+      {/* Compose Choice Modal */}
+      {showComposeChoice && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-3 mb-5">
+              <div>
+                <h3 className="text-lg font-bold mb-1">메일 작성 방식을 선택하세요</h3>
+                <p className="text-sm text-gray-500">엑셀 업로드 파일은 저장하지 않고 수신처 추출에만 사용합니다.</p>
+              </div>
+              <button onClick={() => setShowComposeChoice(false)}
+                className="text-gray-500 hover:text-white transition cursor-pointer text-xl leading-none">
+                &times;
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button onClick={openCompose}
+                className="bg-blue-600 hover:bg-blue-500 rounded-xl p-5 text-left transition cursor-pointer">
+                <span className="block text-2xl mb-2">+</span>
+                <span className="block font-semibold mb-1">신규작성</span>
+                <span className="block text-xs text-blue-100/80">수신처를 직접 입력해서 메일을 작성합니다.</span>
+              </button>
+              <button onClick={openBulkCompose}
+                className="bg-emerald-700 hover:bg-emerald-600 rounded-xl p-5 text-left transition cursor-pointer">
+                <span className="block text-2xl mb-2">&#128196;</span>
+                <span className="block font-semibold mb-1">엑셀업로드</span>
+                <span className="block text-xs text-emerald-100/80">엑셀에서 이메일만 추출하고 개인별 발송을 켭니다.</span>
+              </button>
+            </div>
+            <button onClick={() => setShowComposeChoice(false)}
+              className="w-full mt-4 text-sm text-gray-500 hover:text-gray-300 transition cursor-pointer">
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Send Confirm Modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -877,7 +1058,10 @@ export default function MailCopilot() {
             </h3>
             <div className="space-y-1 text-sm text-gray-400 mb-3">
               <p>받는 사람: <span className="text-gray-200">{editorTo.join(", ")}</span></p>
-              {editorCc.length > 0 && <p>참조(CC): <span className="text-gray-200">{editorCc.join(", ")}</span></p>}
+              {sendIndividually && editorTo.length > 1 && (
+                <p>발송 방식: <span className="text-blue-300">{editorTo.length}명에게 개인별로 1통씩 전송</span></p>
+              )}
+              <p>참조(CC): <span className="text-gray-200">{withDefaultCc(editorCc).join(", ")}</span></p>
               {editorBcc.length > 0 && <p>비밀참조(BCC): <span className="text-gray-200">{editorBcc.join(", ")}</span></p>}
               {editorSubject && <p>제목: <span className="text-gray-200">{editorSubject}</span></p>}
               {attachments.length > 0 && (
@@ -890,7 +1074,7 @@ export default function MailCopilot() {
             <div className="flex gap-3 mt-5">
               <button onClick={handleSend} disabled={sending}
                 className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 py-2.5 rounded-lg font-medium transition cursor-pointer">
-                {sending ? "전송 중..." : "보내기"}
+                {sending ? "전송 중..." : sendIndividually && editorTo.length > 1 ? "개인별 보내기" : "보내기"}
               </button>
               <button onClick={() => setShowConfirm(false)}
                 className="flex-1 bg-gray-800 hover:bg-gray-700 py-2.5 rounded-lg font-medium transition cursor-pointer">
@@ -982,7 +1166,7 @@ export default function MailCopilot() {
           </div>
 
           {/* Compose button */}
-          <button onClick={openCompose}
+          <button onClick={() => setShowComposeChoice(true)}
             className="w-full bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl font-semibold text-sm transition cursor-pointer mb-2 flex items-center justify-center gap-2">
             <span className="text-lg leading-none">+</span> 새 메일 작성
           </button>
@@ -1165,7 +1349,32 @@ export default function MailCopilot() {
                 {/* To */}
                 <div className="flex items-start gap-3">
                   <label className="text-sm text-gray-500 w-16 shrink-0 text-right mt-2">받는사람</label>
-                  <EmailTagInput id="editor-to" emails={editorTo} onChange={setEditorTo} placeholder="이메일 주소 입력 후 Enter" autoFocus={editorMode === "compose"} />
+                  <EmailTagInput id="editor-to" emails={editorTo} onChange={updateEditorTo} placeholder="이메일 주소 입력 후 Enter" autoFocus={editorMode === "compose"} />
+                </div>
+
+                {/* Bulk recipients */}
+                <div className="flex items-start gap-3">
+                  <div className="w-16 shrink-0" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={bulkRecipientInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={(e) => handleBulkRecipientFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => bulkRecipientInputRef.current?.click()}
+                      disabled={bulkImporting}
+                      className="text-xs bg-emerald-700/80 hover:bg-emerald-600 disabled:opacity-50 px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>&#128196;</span> 엑셀에서 수신처 불러오기
+                    </button>
+                    <span className="text-[11px] text-gray-600">
+                      이메일만 자동 추출 · 중복 제거 · 최대 {MAX_TO_RECIPIENTS}명 · 개인별 발송 자동 체크
+                    </span>
+                  </div>
                 </div>
 
                 {/* CC */}
@@ -1179,6 +1388,22 @@ export default function MailCopilot() {
                   <label className="text-sm text-gray-500 w-16 shrink-0 text-right mt-2">비밀참조</label>
                   <EmailTagInput emails={editorBcc} onChange={setEditorBcc} placeholder="BCC" />
                 </div>
+
+                {/* Individual send */}
+                <label className="flex items-start gap-3 rounded-lg border border-gray-800 bg-gray-900/50 px-3 py-2 text-sm text-gray-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sendIndividually}
+                    onChange={(e) => setSendIndividually(e.target.checked)}
+                    className="mt-1 accent-blue-600"
+                  />
+                  <span>
+                    <span className="font-medium text-gray-200">개인별로 보내기</span>
+                    <span className="block text-xs text-gray-500 mt-0.5">
+                      받는사람(To)이 여러 명이면 각 수신자에게 1명씩 따로 발송합니다.
+                    </span>
+                  </span>
+                </label>
 
                 {/* Subject */}
                 <div className="flex items-center gap-3">
@@ -1376,7 +1601,7 @@ export default function MailCopilot() {
             <div className="text-center space-y-4">
               <div className="text-5xl opacity-30">&#9993;</div>
               <p className="text-xl">메일을 선택하세요</p>
-              <button onClick={openCompose}
+              <button onClick={() => setShowComposeChoice(true)}
                 className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition cursor-pointer inline-flex items-center gap-2">
                 <span className="text-lg leading-none">+</span> 새 메일 작성
               </button>
