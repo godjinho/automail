@@ -199,6 +199,13 @@ public class MainActivity extends AppCompatActivity {
                 + "if(!m){m=document.createElement('meta');m.name='viewport';document.head.appendChild(m);}"
                 + "m.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no';"
                 + "window.__AUTOMAIL_APP='android';"
+                + "if(!window.__AUTOMAIL_ANDROID_TOUCH_PATCH){"
+                + "window.__AUTOMAIL_ANDROID_TOUCH_PATCH=true;"
+                + "function sidebar(){return Array.prototype.find.call(document.querySelectorAll('div'),function(el){var c=el.className||'';return typeof c==='string'&&c.indexOf('w-80')>-1&&c.indexOf('flex-col')>-1&&c.indexOf('border-r')>-1;});}"
+                + "function openSidebar(){var el=sidebar();if(!el)return false;el.classList.remove('-translate-x-full');el.classList.add('translate-x-0');el.style.transform='translateX(0)';el.style.visibility='visible';el.style.pointerEvents='auto';var t=document.querySelector('button.fixed.top-3.left-3 span');if(t)t.textContent='\\u2715';return true;}"
+                + "function isMenuButton(el){var b=el&&el.closest&&el.closest('button');if(!b)return false;var text=(b.textContent||'').trim();var r=b.getBoundingClientRect();return text==='\\u2630'||text==='\\u2715'||(r.left<80&&r.top<90&&r.width<80&&r.height<80);}"
+                + "['touchstart','pointerdown','click'].forEach(function(type){document.addEventListener(type,function(e){var p=e.touches&&e.touches[0]?e.touches[0]:e;if(isMenuButton(e.target)||(p&&p.clientX<90&&p.clientY<100)){if(openSidebar()){e.preventDefault();e.stopImmediatePropagation();}}},true);});"
+                + "}"
                 + "})()";
         webView.evaluateJavascript(js, null);
     }
